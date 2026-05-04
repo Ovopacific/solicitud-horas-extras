@@ -1,57 +1,80 @@
 /**
- * app.js - Main Application Logic
+ * app.js - Lógica principal de la aplicación
+ * Organizado en secciones para facilitar su mantenimiento:
+ * 1. Estado de la Aplicación
+ * 2. Inicialización
+ * 3. Efectos Visuales
+ * 4. Autenticación y Seguridad
+ * 5. Llamadas a la API y Datos
+ * 6. Renderizado y Vistas
+ * 7. Componentes UI y Modales
+ * 8. Utilidades
  */
 
 const app = {
-  data: [],
-  loginMode: 'user', // tab in login screen
-  role: null, // 'user' or 'admin'
-  currentUser: null, // name of the user
-  apiUrl: 'https://script.google.com/macros/s/AKfycbzOtk9XFMWsS6p8_WYW7kRIyWgOZNJ4pdcGpYU2rRJCbYfgrA9vDoknh0T5WuEkuQCK/exec',
+  // ==========================================
+  // 1. ESTADO DE LA APLICACIÓN (STATE)
+  // ==========================================
 
+  data: [], // Almacena los registros obtenidos de la API
+  loginMode: 'user', // Modo de inicio de sesión actual: 'user' o 'admin'
+  role: null, // Rol del usuario autenticado: 'user' o 'admin'
+  currentUser: null, // Nombre del usuario autenticado
+  sessionToken: null, // Token de sesión emitido por el backend
+  apiUrl: 'https://script.google.com/macros/s/AKfycby1FsCAwl01GH-Xf1BpLBz6cvmQ0AAvNsMd_8THACGirerJVVSFMIZTkdpBlzR3h1NN/exec',
+
+  // ==========================================
+  // 2. INICIALIZACIÓN (INITIALIZATION)
+  // ==========================================
+
+  /**
+   * Función de arranque principal. Configura eventos y efectos visuales.
+   */
   init() {
     this.setupEventListeners();
+
+    // Limpia temas previos del DOM (si existen)
     localStorage.removeItem('appTheme');
     document.body.removeAttribute('data-theme');
 
-    // Initialize 3D effects
+    // Inicializa efectos visuales
     setTimeout(() => this.init3DLogin(), 100);
     this.initWaterRipple();
     this.initCustomCursor();
-    // Don't log in automatically. The beautiful login screen is visible by default.
   },
 
+  /**
+   * Configura los listeners de los eventos principales del DOM.
+   */
   setupEventListeners() {
-    // Login Submit
+    // Formulario de inicio de sesión
     document.getElementById('loginForm').addEventListener('submit', (e) => {
       e.preventDefault();
       this.login();
     });
 
-    // Form Submit
+    // Formulario para crear un nuevo registro
     document.getElementById('recordForm').addEventListener('submit', (e) => {
       e.preventDefault();
       this.submitRecord();
     });
 
-    // Filters Admin
+    // Filtros de búsqueda (Vista Admin)
     document.getElementById('searchInput').addEventListener('input', () => this.renderAdminTable());
     document.getElementById('statusFilter').addEventListener('change', () => this.renderAdminTable());
 
-    // Restore date input to today by default
+    // Inicializa el campo de fecha con el día actual por defecto
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('fecha').value = today;
   },
 
-  switchLoginTab(mode) {
-    this.loginMode = mode;
-    document.getElementById('btnTabUser').classList.toggle('active', mode === 'user');
-    document.getElementById('btnTabAdmin').classList.toggle('active', mode === 'admin');
+  // ==========================================
+  // 3. EFECTOS VISUALES (VISUAL EFFECTS)
+  // ==========================================
 
-    document.getElementById('userLoginFields').classList.toggle('d-none', mode === 'admin');
-    document.getElementById('adminLoginFields').classList.toggle('d-none', mode === 'user');
-  },
-
+  /**
+   * Inicializa el efecto 3D dinámico al mover el ratón sobre la tarjeta de login.
+   */
   init3DLogin() {
     const card = document.querySelector('.login-card');
     const wrapper = document.querySelector('.login-card-wrapper');
@@ -65,7 +88,7 @@ const app = {
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
 
-      // More pronounced tilt for dramatic effect
+      // Cálculo del grado de inclinación basado en la posición del ratón
       const rotateX = ((y - centerY) / centerY) * -15;
       const rotateY = ((x - centerX) / centerX) * 15;
 
@@ -86,6 +109,9 @@ const app = {
     });
   },
 
+  /**
+   * Crea un efecto de expansión tipo "gota de agua" al hacer clic en cualquier parte.
+   */
   initWaterRipple() {
     document.addEventListener('click', (e) => {
       const ripple = document.createElement('div');
@@ -99,7 +125,7 @@ const app = {
 
       document.body.appendChild(ripple);
 
-      // Cursor click feedback
+      // Reacción del cursor personalizado al hacer clic
       const cursorRing = document.getElementById('customCursorRing');
       if (cursorRing) {
         cursorRing.style.width = '35px';
@@ -116,6 +142,9 @@ const app = {
     });
   },
 
+  /**
+   * Configura y anima el cursor personalizado de la aplicación.
+   */
   initCustomCursor() {
     const ring = document.getElementById('customCursorRing');
     const glow = document.getElementById('customCursorGlow');
@@ -129,12 +158,12 @@ const app = {
     document.addEventListener('mousemove', (e) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
-      // Instant update for the glow point
+      // Actualización instantánea del punto central brillante
       glow.style.left = mouseX + 'px';
       glow.style.top = mouseY + 'px';
     });
 
-    // Smooth delay for the ring
+    // Retardo suave para el anillo exterior usando requestAnimationFrame
     const render = () => {
       ringX += (mouseX - ringX) * 0.2;
       ringY += (mouseY - ringY) * 0.2;
@@ -144,7 +173,7 @@ const app = {
     };
     requestAnimationFrame(render);
 
-    // Hover effects on buttons/links
+    // Efectos de hover sobre elementos interactivos
     document.querySelectorAll('button, a, input, select, .login-card').forEach(el => {
       el.addEventListener('mouseenter', () => {
         ring.style.width = '40px';
@@ -161,6 +190,54 @@ const app = {
     });
   },
 
+  /**
+   * Genera partículas flotantes animadas en el fondo.
+   */
+  createOrbs() {
+    const container = document.getElementById('bg-container');
+    if (!container) return;
+
+    container.innerHTML = ''; // Limpiar si existe previamente
+
+    const dropCount = 40; // Número de partículas
+    for (let i = 0; i < dropCount; i++) {
+      const orb = document.createElement('div');
+      orb.classList.add('particle');
+
+      // Posición, velocidad y retardo aleatorio
+      orb.style.left = `${Math.random() * 100}vw`;
+      orb.style.animationDuration = `${10 + Math.random() * 15}s`;
+      orb.style.animationDelay = `${Math.random() * 10}s`;
+
+      // Tamaño aleatorio sutil
+      const size = Math.random() * 4 + 3;
+      orb.style.width = `${size}px`;
+      orb.style.height = `${size}px`;
+      orb.style.opacity = Math.random() * 0.6 + 0.2;
+
+      container.appendChild(orb);
+    }
+  },
+
+  // ==========================================
+  // 4. AUTENTICACIÓN Y SEGURIDAD (AUTH & WEBAUTHN)
+  // ==========================================
+
+  /**
+   * Alterna entre el panel de acceso de Usuario y Administrador.
+   */
+  switchLoginTab(mode) {
+    this.loginMode = mode;
+    document.getElementById('btnTabUser').classList.toggle('active', mode === 'user');
+    document.getElementById('btnTabAdmin').classList.toggle('active', mode === 'admin');
+
+    document.getElementById('userLoginFields').classList.toggle('d-none', mode === 'admin');
+    document.getElementById('adminLoginFields').classList.toggle('d-none', mode === 'user');
+  },
+
+  /**
+   * Procesa el formulario de login, derivando al flujo correspondiente.
+   */
   async login() {
     if (this.loginMode === 'admin') {
       const user = document.getElementById('adminUser').value;
@@ -182,6 +259,7 @@ const app = {
         if (resData.success && user === 'admin') {
           this.role = 'admin';
           this.currentUser = 'Administrador';
+          this.sessionToken = resData.token;
           this.completeLogin();
         } else {
           this.showToast('Contraseña de administrador incorrecta', 'danger');
@@ -196,14 +274,57 @@ const app = {
 
     } else {
       const name = document.getElementById('loginName').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
       if (name.length > 2) {
-        this.handleUserLogin(name);
+        if (pass.length > 0) {
+          this.handleUserPasswordLogin(name, pass);
+        } else {
+          this.handleUserLogin(name);
+        }
       } else {
         this.showToast('Por favor ingresa un nombre válido', 'danger');
       }
     }
   },
 
+  /**
+   * Gestiona el inicio de sesión tradicional con usuario y contraseña.
+   */
+  async handleUserPasswordLogin(name, pass) {
+    const btn = document.querySelector('.login-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Verificando...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'login_user_password', payload: { nombre: name, password: pass } })
+      });
+      const resData = await response.json();
+
+      if (resData.success) {
+        this.role = 'user';
+        this.currentUser = name;
+        this.sessionToken = resData.token;
+        document.getElementById('nombre').value = name;
+        this.completeLogin();
+      } else {
+        this.showToast(resData.error || 'Contraseña incorrecta', 'danger');
+      }
+    } catch (error) {
+      console.error(error);
+      this.showToast('Error de conexión con el servidor', 'danger');
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  },
+
+  /**
+   * Gestiona el flujo de autenticación biométrica o PIN (WebAuthn) para usuarios normales.
+   */
   async handleUserLogin(name) {
     if (!window.PublicKeyCredential) {
       this.showToast('Tu navegador no soporta autenticación biométrica.', 'danger');
@@ -216,7 +337,7 @@ const app = {
     btn.disabled = true;
 
     try {
-      // 1. Check if user is registered and get challenge
+      // 1. Verificar si el usuario está registrado y obtener desafío (challenge)
       const checkRes = await fetch(this.apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -227,7 +348,7 @@ const app = {
       if (!checkData.success) throw new Error(checkData.error);
 
       if (checkData.isRegistered) {
-        // --- AUTHENTICATION FLOW ---
+        // --- FLUJO DE AUTENTICACIÓN (LOGIN) ---
         this.showToast('Solicitando huella/PIN para acceder...', 'info');
 
         try {
@@ -239,7 +360,7 @@ const app = {
                 type: 'public-key',
                 transports: ['internal', 'usb', 'ble', 'nfc']
               }],
-              userVerification: 'required', // Enforces PIN/Biometrics
+              userVerification: 'required', // Exige PIN/Biometría
               timeout: 60000
             }
           });
@@ -247,7 +368,8 @@ const app = {
           const credentialId = this.bufferToBase64url(assertion.rawId);
 
           btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Verificando...';
-          // 2. Verify credentialId matches on server
+
+          // 2. Verificar en el servidor que la credencial coincida
           const verifyRes = await fetch(this.apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -258,6 +380,7 @@ const app = {
           if (verifyData.success) {
             this.role = 'user';
             this.currentUser = name;
+            this.sessionToken = verifyData.token;
             document.getElementById('nombre').value = name;
             this.completeLogin();
           } else {
@@ -270,7 +393,7 @@ const app = {
         }
 
       } else {
-        // --- REGISTRATION FLOW ---
+        // --- FLUJO DE REGISTRO (SIGN UP) ---
         const wantsToRegister = confirm(`Hola ${name}. No tienes un dispositivo registrado.\n\nPara proteger tu acceso, necesitamos registrar este dispositivo. El sistema usará tu huella, FaceID o PIN de Windows/celular.\n\n¿Deseas registrar este dispositivo ahora?`);
         if (!wantsToRegister) {
           this.showToast('Registro cancelado.', 'info');
@@ -295,8 +418,8 @@ const app = {
                 { type: 'public-key', alg: -257 } // RS256
               ],
               authenticatorSelection: {
-                authenticatorAttachment: 'platform', // Prefer built-in authenticators
-                userVerification: 'required' // Force PIN/Biometric
+                authenticatorAttachment: 'platform', // Preferir autenticadores integrados
+                userVerification: 'required' // Forzar PIN/Biometría
               },
               timeout: 60000,
               attestation: 'none'
@@ -306,7 +429,8 @@ const app = {
           const credentialId = this.bufferToBase64url(credential.rawId);
 
           btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Guardando...';
-          // Save credential ID to server
+
+          // Guardar el ID de credencial en el servidor
           const regRes = await fetch(this.apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -318,6 +442,7 @@ const app = {
             this.showToast('¡Dispositivo registrado exitosamente!', 'success');
             this.role = 'user';
             this.currentUser = name;
+            this.sessionToken = regData.token;
             document.getElementById('nombre').value = name;
             this.completeLogin();
           } else {
@@ -332,50 +457,37 @@ const app = {
 
     } catch (error) {
       console.error(error);
-      this.showToast('Error de conexión con el servidor', 'danger');
+      this.showToast(error.message || 'Error de conexión con el servidor', 'danger');
     } finally {
       btn.innerHTML = originalText;
       btn.disabled = false;
     }
   },
 
-  // --- WebAuthn Helpers ---
-  bufferToBase64url(buffer) {
-    const bytes = new Uint8Array(buffer);
-    let str = '';
-    for (const charCode of bytes) {
-      str += String.fromCharCode(charCode);
-    }
-    const base64String = btoa(str);
-    return base64String.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  },
-
-  base64urlToBuffer(base64url) {
-    const padding = '='.repeat((4 - base64url.length % 4) % 4);
-    const base64 = (base64url + padding).replace(/\-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray.buffer;
-  },
-
+  /**
+   * Se ejecuta tras una autenticación exitosa para ocultar login y mostrar app.
+   */
   completeLogin() {
     document.getElementById('loginScreen').classList.add('d-none');
     document.getElementById('appContent').classList.remove('d-none');
     document.getElementById('mainNav').classList.remove('d-none');
 
     document.getElementById('roleBadge').innerText = 'Hola, ' + this.currentUser;
-    document.getElementById('roleBadge').className = this.role === 'admin' ? 'badge bg-danger text-white px-3 py-2 border rounded-pill' : 'badge bg-primary text-white px-3 py-2 border rounded-pill';
+    document.getElementById('roleBadge').className = this.role === 'admin'
+      ? 'badge bg-danger text-white px-3 py-2 border rounded-pill'
+      : 'badge bg-primary text-white px-3 py-2 border rounded-pill';
 
     this.loadData();
     this.updateView();
   },
 
+  /**
+   * Cierra la sesión activa y reinicia el estado.
+   */
   logout() {
     this.role = null;
     this.currentUser = null;
+    this.sessionToken = null;
     this.data = [];
     document.getElementById('loginScreen').classList.remove('d-none');
     document.getElementById('appContent').classList.add('d-none');
@@ -383,41 +495,23 @@ const app = {
     document.getElementById('loginForm').reset();
   },
 
-  updateView() {
-    if (this.role === 'admin') {
-      document.getElementById('userView').classList.add('d-none');
-      document.getElementById('adminView').classList.remove('d-none');
-    } else {
-      document.getElementById('adminView').classList.add('d-none');
-      document.getElementById('userView').classList.remove('d-none');
-    }
-  },
+  // ==========================================
+  // 5. LLAMADAS A LA API Y DATOS (API & DATA)
+  // ==========================================
 
-  // Removed saveApiUrl as it's hardcoded now
-
-  showToast(message, type = 'info') {
-    document.getElementById('toastMessage').innerText = message;
-    const icon = document.getElementById('toastIcon');
-    const toastEl = document.getElementById('liveToast');
-
-    toastEl.className = 'toast border-0 shadow align-items-center text-bg-' + type;
-
-    if (type === 'success') icon.className = 'bi bi-check-circle-fill';
-    else if (type === 'danger') icon.className = 'bi bi-exclamation-triangle-fill';
-    else icon.className = 'bi bi-info-circle-fill';
-
-    const toast = new bootstrap.Toast(toastEl);
-    toast.show();
-  },
-
-  // --- API Calls ---
-
+  /**
+   * Carga los datos de las horas extras desde la API (Google Sheets).
+   */
   async loadData() {
     if (!this.apiUrl) return;
 
     this.showLoader(true);
     try {
-      const response = await fetch(this.apiUrl);
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'load_data', payload: { token: this.sessionToken } })
+      });
       const resData = await response.json();
 
       if (resData.success) {
@@ -435,6 +529,9 @@ const app = {
     }
   },
 
+  /**
+   * Envía un nuevo registro de horas extra a la API.
+   */
   async submitRecord() {
     const submitBtn = document.getElementById('submitBtn');
     const loader = document.getElementById('submitLoader');
@@ -455,7 +552,8 @@ const app = {
       horas: document.getElementById('horas').value,
       fecha: document.getElementById('fecha').value,
       motivo: document.getElementById('motivo').value,
-      firma_img: base64
+      firma_img: base64,
+      token: this.sessionToken
     };
 
     submitBtn.disabled = true;
@@ -476,11 +574,11 @@ const app = {
         this.showToast('Solicitud enviada exitosamente', 'success');
         document.getElementById('recordForm').reset();
 
-        // Reset date
+        // Restablece la fecha a hoy
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('fecha').value = today;
 
-        // Hide Modal
+        // Oculta el modal
         bootstrap.Modal.getInstance(document.getElementById('newRecordModal')).hide();
 
         this.loadData();
@@ -496,6 +594,9 @@ const app = {
     }
   },
 
+  /**
+   * Actualiza el estado de una solicitud (Aprobado, Rechazado, Pendiente).
+   */
   async updateStatus(id, newStatus) {
     if (!confirm(`¿Estás seguro de cambiar el estado a ${newStatus}?`)) return;
 
@@ -503,7 +604,7 @@ const app = {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'update_status', payload: { id, estado: newStatus } })
+        body: JSON.stringify({ action: 'update_status', payload: { id, estado: newStatus, token: this.sessionToken } })
       });
 
       const resData = await response.json();
@@ -511,7 +612,7 @@ const app = {
       if (resData.success) {
         this.showToast('Estado actualizado', 'success');
 
-        // Update local data optimistically
+        // Actualización optimista local
         const item = this.data.find(d => d.id === id);
         if (item) item.estado = newStatus;
         this.renderTables();
@@ -524,53 +625,9 @@ const app = {
     }
   },
 
-  viewSignature(imgSrc) {
-    document.getElementById('fullSizeImage').src = imgSrc;
-    new bootstrap.Modal(document.getElementById('imageViewerModal')).show();
-  },
-
-  viewDetails(id) {
-    const item = this.data.find(d => d.id === id);
-    if (!item) return;
-
-    document.getElementById('detailNombre').innerText = item.nombre + ' ' + item.apellido;
-    document.getElementById('detailArea').innerText = item.area;
-    document.getElementById('detailHoras').innerText = item.horas + ' h';
-    document.getElementById('detailFecha').innerText = this.formatDate(item.fecha);
-    document.getElementById('detailEstado').innerHTML = this.getStatusBadgeHTML(item.estado);
-    document.getElementById('detailMotivo').innerText = item.motivo;
-
-    new bootstrap.Modal(document.getElementById('detailsModal')).show();
-  },
-
-  compressImage(file) {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 250;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.6));
-        };
-        img.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  },
-
+  /**
+   * Elimina un registro de horas extra.
+   */
   async deleteRecord(id) {
     if (!confirm('¿Estás seguro de eliminar este registro?')) return;
 
@@ -578,7 +635,7 @@ const app = {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'delete', payload: { id } })
+        body: JSON.stringify({ action: 'delete', payload: { id, token: this.sessionToken } })
       });
 
       const resData = await response.json();
@@ -596,22 +653,26 @@ const app = {
     }
   },
 
-  // --- UI Rendering ---
+  // ==========================================
+  // 6. RENDERIZADO Y VISTAS (RENDERING & VIEWS)
+  // ==========================================
 
-  showLoader(show) {
+  /**
+   * Muestra la vista apropiada según el rol (Usuario o Administrador).
+   */
+  updateView() {
     if (this.role === 'admin') {
-      const loader = document.getElementById('adminLoader');
-      const table = document.getElementById('adminTable').parentElement;
-      if (show) { loader.classList.remove('d-none'); table.classList.add('d-none'); }
-      else { loader.classList.add('d-none'); table.classList.remove('d-none'); }
+      document.getElementById('userView').classList.add('d-none');
+      document.getElementById('adminView').classList.remove('d-none');
     } else {
-      const loader = document.getElementById('userLoader');
-      const table = document.getElementById('userTable').parentElement;
-      if (show) { loader.classList.remove('d-none'); table.classList.add('d-none'); }
-      else { loader.classList.add('d-none'); table.classList.remove('d-none'); }
+      document.getElementById('adminView').classList.add('d-none');
+      document.getElementById('userView').classList.remove('d-none');
     }
   },
 
+  /**
+   * Renderiza ambas tablas según los datos y el rol activo.
+   */
   renderTables() {
     this.renderUserTable();
     if (this.role === 'admin') {
@@ -619,34 +680,14 @@ const app = {
     }
   },
 
-  getStatusBadgeHTML(status) {
-    const s = status ? status.toLowerCase() : 'pendiente';
-    return `
-      <span class="status-badge status-${s}">
-        <span class="status-dot"></span>
-        ${s}
-      </span>
-    `;
-  },
-
-  getSignedHTML(item) {
-    const isSigned = (item.firmado === 'si' || item.firmado === 'Sí');
-    // For admin, we primarily care about the signature image uploaded by user
-    const imgHtml = item.firma_img
-      ? `<div class="mt-2 text-center" style="cursor: pointer;" onclick="app.viewSignature('${item.firma_img}')" title="Haz clic para ver firma completa">
-           <span class="small text-muted d-block fw-bold" style="font-size:0.65rem; text-transform:uppercase;"><i class="bi bi-search"></i> Firma Adjunta</span>
-           <img src="${item.firma_img}" style="max-height: 40px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); background: white;" class="shadow-sm">
-         </div>`
-      : `<div class="text-nowrap mt-1"><i class="bi bi-circle unsigned-x"></i> <span class="small text-muted ms-1">No Firmado</span></div>`;
-
-    return `<div class="d-flex flex-column align-items-center">${imgHtml}</div>`;
-  },
-
+  /**
+   * Renderiza la tabla de registros para el usuario normal (filtrada por su nombre).
+   */
   renderUserTable() {
     const tbody = document.getElementById('userTableBody');
     const emptyState = document.getElementById('userEmpty');
 
-    // Filter data by currentUser for User Role
+    // Filtra datos solo para este usuario
     const userSpecificData = this.data.filter(item =>
       item.nombre.toLowerCase().includes(this.currentUser.toLowerCase())
     );
@@ -664,13 +705,13 @@ const app = {
     tbody.innerHTML = reversedData.map(item => `
       <tr>
         <td>
-          <div class="fw-semibold">${item.nombre} ${item.apellido}</div>
+          <div class="fw-semibold">${this.escapeHTML(item.nombre)} ${this.escapeHTML(item.apellido)}</div>
           <div class="small text-muted">${item.id ? item.id.substring(0, 8) : ''}</div>
         </td>
-        <td><span class="badge bg-light text-dark border">${item.area}</span></td>
+        <td><span class="badge bg-light text-dark border">${this.escapeHTML(item.area)}</span></td>
         <td class="fw-bold">${item.horas} h</td>
         <td>${this.formatDate(item.fecha)}</td>
-        <td class="small text-muted text-truncate" style="max-width: 150px; cursor: pointer; text-decoration: underline; text-decoration-color: #dee2e6;" onclick="app.viewDetails('${item.id}')" title="Clic para ver detalle completo">${item.motivo}</td>
+        <td class="small text-muted text-truncate" style="max-width: 150px; cursor: pointer; text-decoration: underline; text-decoration-color: #dee2e6;" onclick="app.viewDetails('${item.id}')" title="Clic para ver detalle completo">${this.escapeHTML(item.motivo)}</td>
         <td>${this.getStatusBadgeHTML(item.estado)}</td>
         <td>${this.getSignedHTML(item)}</td>
         <td class="text-end">
@@ -682,6 +723,9 @@ const app = {
     `).join('');
   },
 
+  /**
+   * Renderiza la tabla completa para administradores, incluyendo filtros de búsqueda.
+   */
   renderAdminTable() {
     const tbody = document.getElementById('adminTableBody');
     const emptyState = document.getElementById('adminEmpty');
@@ -704,18 +748,16 @@ const app = {
     emptyState.classList.add('d-none');
 
     tbody.innerHTML = filteredData.map(item => {
-      const isSigned = (item.firmado === 'si');
-
       return `
       <tr>
         <td>
-          <div class="fw-semibold">${item.nombre} ${item.apellido}</div>
+          <div class="fw-semibold">${this.escapeHTML(item.nombre)} ${this.escapeHTML(item.apellido)}</div>
           <div class="small text-muted">Sol: ${this.formatDate(item.fecha_creacion, true)}</div>
         </td>
-        <td><span class="badge bg-light text-dark border">${item.area}</span></td>
+        <td><span class="badge bg-light text-dark border">${this.escapeHTML(item.area)}</span></td>
         <td class="fw-bold">${item.horas} h</td>
         <td>${this.formatDate(item.fecha)}</td>
-        <td class="small text-muted text-truncate" style="max-width: 150px; cursor: pointer; text-decoration: underline; text-decoration-color: #dee2e6;" onclick="app.viewDetails('${item.id}')" title="Clic para ver detalle completo">${item.motivo}</td>
+        <td class="small text-muted text-truncate" style="max-width: 150px; cursor: pointer; text-decoration: underline; text-decoration-color: #dee2e6;" onclick="app.viewDetails('${item.id}')" title="Clic para ver detalle completo">${this.escapeHTML(item.motivo)}</td>
         <td>
           <div class="dropdown">
             <button class="btn btn-sm btn-light border dropdown-toggle w-100 text-start" type="button" data-bs-toggle="dropdown">
@@ -740,6 +782,9 @@ const app = {
     `}).join('');
   },
 
+  /**
+   * Actualiza los cuadros estadísticos en la vista de Administrador.
+   */
   updateStats() {
     document.getElementById('statTotal').innerText = this.data.length;
     document.getElementById('statPendiente').innerText = this.data.filter(d => (d.estado || '').toLowerCase() === 'pendiente').length;
@@ -747,6 +792,104 @@ const app = {
     document.getElementById('statRechazado').innerText = this.data.filter(d => (d.estado || '').toLowerCase() === 'rechazado').length;
   },
 
+  // ==========================================
+  // 7. COMPONENTES UI Y MODALES (UI COMPONENTS)
+  // ==========================================
+
+  /**
+   * Muestra u oculta el spinner de carga en las tablas.
+   */
+  showLoader(show) {
+    if (this.role === 'admin') {
+      const loader = document.getElementById('adminLoader');
+      const table = document.getElementById('adminTable').parentElement;
+      if (show) { loader.classList.remove('d-none'); table.classList.add('d-none'); }
+      else { loader.classList.add('d-none'); table.classList.remove('d-none'); }
+    } else {
+      const loader = document.getElementById('userLoader');
+      const table = document.getElementById('userTable').parentElement;
+      if (show) { loader.classList.remove('d-none'); table.classList.add('d-none'); }
+      else { loader.classList.add('d-none'); table.classList.remove('d-none'); }
+    }
+  },
+
+  /**
+   * Muestra un mensaje flotante tipo Toast.
+   */
+  showToast(message, type = 'info') {
+    document.getElementById('toastMessage').innerText = message;
+    const icon = document.getElementById('toastIcon');
+    const toastEl = document.getElementById('liveToast');
+
+    toastEl.className = 'toast border-0 shadow align-items-center text-bg-' + type;
+
+    if (type === 'success') icon.className = 'bi bi-check-circle-fill';
+    else if (type === 'danger') icon.className = 'bi bi-exclamation-triangle-fill';
+    else icon.className = 'bi bi-info-circle-fill';
+
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+  },
+
+  /**
+   * Genera el HTML de la etiqueta de estado con colores dinámicos.
+   */
+  getStatusBadgeHTML(status) {
+    const s = status ? status.toLowerCase() : 'pendiente';
+    return `
+      <span class="status-badge status-${s}">
+        <span class="status-dot"></span>
+        ${s}
+      </span>
+    `;
+  },
+
+  /**
+   * Genera el HTML de la imagen de firma o el estado no firmado para la tabla de usuario.
+   */
+  getSignedHTML(item) {
+    const imgHtml = item.firma_img
+      ? `<div class="mt-2 text-center" style="cursor: pointer;" onclick="app.viewSignature('${item.firma_img}')" title="Haz clic para ver firma completa">
+           <span class="small text-muted d-block fw-bold" style="font-size:0.65rem; text-transform:uppercase;"><i class="bi bi-search"></i> Firma Adjunta</span>
+           <img src="${item.firma_img}" style="max-height: 40px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); background: white;" class="shadow-sm">
+         </div>`
+      : `<div class="text-nowrap mt-1"><i class="bi bi-circle unsigned-x"></i> <span class="small text-muted ms-1">No Firmado</span></div>`;
+
+    return `<div class="d-flex flex-column align-items-center">${imgHtml}</div>`;
+  },
+
+  /**
+   * Muestra el modal con la imagen de la firma ampliada.
+   */
+  viewSignature(imgSrc) {
+    document.getElementById('fullSizeImage').src = imgSrc;
+    new bootstrap.Modal(document.getElementById('imageViewerModal')).show();
+  },
+
+  /**
+   * Muestra el modal con el detalle completo de un registro.
+   */
+  viewDetails(id) {
+    const item = this.data.find(d => d.id === id);
+    if (!item) return;
+
+    document.getElementById('detailNombre').innerText = item.nombre + ' ' + item.apellido;
+    document.getElementById('detailArea').innerText = item.area;
+    document.getElementById('detailHoras').innerText = item.horas + ' h';
+    document.getElementById('detailFecha').innerText = this.formatDate(item.fecha);
+    document.getElementById('detailEstado').innerHTML = this.getStatusBadgeHTML(item.estado);
+    document.getElementById('detailMotivo').innerText = item.motivo;
+
+    new bootstrap.Modal(document.getElementById('detailsModal')).show();
+  },
+
+  // ==========================================
+  // 8. UTILIDADES Y AYUDANTES (UTILITIES & HELPERS)
+  // ==========================================
+
+  /**
+   * Formatea una cadena de fecha a formato local amigable.
+   */
   formatDate(dateString, includeTime = false) {
     if (!dateString) return '';
     try {
@@ -763,21 +906,55 @@ const app = {
     }
   },
 
+  /**
+   * Comprime una imagen adjunta antes de enviarla al servidor (base64).
+   */
+  compressImage(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 250; // Límite de ancho para la compresión
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  },
+
+  /**
+   * Exporta los datos visualizados en pantalla a un archivo CSV descargable.
+   */
   exportToCSV() {
     if (this.data.length === 0) {
       this.showToast('No hay datos para exportar', 'danger');
       return;
     }
 
-    // Get headers
+    // Encabezados dinámicos a partir del primer objeto
     const headers = Object.keys(this.data[0]);
 
-    // Create CSV content
+    // Contenido CSV
     const csvContent = [
       headers.join(','),
       ...this.data.map(row => headers.map(fieldName => {
         let cell = row[fieldName] === null || row[fieldName] === undefined ? '' : String(row[fieldName]);
-        // Escape quotes and wrap in quotes if contains comma
+        // Escapar comillas y ajustar formato
         cell = cell.replace(/"/g, '""');
         if (cell.search(/("|,|\n)/g) >= 0) {
           cell = `"${cell}"`;
@@ -786,7 +963,7 @@ const app = {
       }).join(','))
     ].join('\n');
 
-    // Download file
+    // Crea el archivo descargable
     const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -797,32 +974,56 @@ const app = {
     document.body.removeChild(link);
   },
 
-  createOrbs() {
-    const container = document.getElementById('bg-container');
-    if (!container) return;
-
-    container.innerHTML = ''; // Limpiar si existe canvas
-
-    const dropCount = 40; // Number of floating particles
-    for (let i = 0; i < dropCount; i++) {
-      const orb = document.createElement('div');
-      orb.classList.add('particle');
-      // Randomize position, speed, and delay
-      orb.style.left = `${Math.random() * 100}vw`;
-      orb.style.animationDuration = `${10 + Math.random() * 15}s`;
-      orb.style.animationDelay = `${Math.random() * 10}s`;
-      // Randomize size slightly
-      const size = Math.random() * 4 + 3;
-      orb.style.width = `${size}px`;
-      orb.style.height = `${size}px`;
-      orb.style.opacity = Math.random() * 0.6 + 0.2;
-      container.appendChild(orb);
+  /**
+   * Ayudante de WebAuthn: Convierte Buffer a Base64 URL-safe.
+   */
+  bufferToBase64url(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let str = '';
+    for (const charCode of bytes) {
+      str += String.fromCharCode(charCode);
     }
+    const base64String = btoa(str);
+    return base64String.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  },
+
+  /**
+   * Ayudante de WebAuthn: Convierte Base64 URL-safe a Buffer.
+   */
+  base64urlToBuffer(base64url) {
+    const padding = '='.repeat((4 - base64url.length % 4) % 4);
+    const base64 = (base64url + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray.buffer;
+  },
+
+  /**
+   * Limpia cadenas de texto para evitar XSS al renderizar en el DOM.
+   */
+  escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function(match) {
+      const escape = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return escape[match];
+    });
   }
 };
 
-// Initialize after DOM loads
+// ==========================================
+// ARRANQUE DE LA APLICACIÓN
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   app.init();
   app.createOrbs();
 });
+

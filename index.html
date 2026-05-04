@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,43 +12,43 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="css/styles.css">
 </head>
-  <div class="custom-cursor" id="customCursorRing"></div>
-  <div class="custom-cursor-glow" id="customCursorGlow"></div>
+<div class="custom-cursor" id="customCursorRing"></div>
+<div class="custom-cursor-glow" id="customCursorGlow"></div>
 
-  <!-- Animated Mesh Background Container -->
-  <div id="bg-container" class="mesh-background"></div>
-  
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm glass-nav d-none" id="mainNav">
-    <div class="container">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-        <i class="bi bi-clock-history fs-4"></i>
-        <span class="fw-semibold">Sistema de Horas Extra</span>
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav align-items-center">
-          <li class="nav-item">
-            <span class="nav-link">
-              <span class="badge bg-light text-primary" id="roleBadge">Usuario</span>
-            </span>
-          </li>
-          <li class="nav-item ms-2">
-            <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-2 fw-bold" onclick="app.logout()">
-              <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-            </button>
-          </li>
-        </ul>
-      </div>
+<!-- Animated Mesh Background Container -->
+<div id="bg-container" class="mesh-background"></div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm glass-nav d-none" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+      <i class="bi bi-clock-history fs-4"></i>
+      <span class="fw-semibold">Sistema de Horas Extra</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="navbar-nav align-items-center">
+        <li class="nav-item">
+          <span class="nav-link">
+            <span class="badge bg-light text-primary" id="roleBadge">Usuario</span>
+          </span>
+        </li>
+        <li class="nav-item ms-2">
+          <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-2 fw-bold" onclick="app.logout()">
+            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+          </button>
+        </li>
+      </ul>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <!-- Stunning Login Screen -->
-  <div id="loginScreen" class="login-wrapper">
-    <div class="login-card-wrapper">
-      <div class="login-card p-5 text-center shadow-lg">
+<!-- Stunning Login Screen -->
+<div id="loginScreen" class="login-wrapper">
+  <div class="login-card-wrapper">
+    <div class="login-card p-5 text-center shadow-lg">
       <div class="login-icon-box mx-auto mb-4">
         <i class="bi bi-fingerprint fs-1 text-primary"></i>
       </div>
@@ -55,19 +56,26 @@
       <p class="text-muted mb-4 d-flex align-items-center justify-content-center gap-2">
         <i class="bi bi-clock-history text-primary"></i> Gestión y Control
       </p>
-      
+
       <div class="d-flex justify-content-center gap-3 mb-4">
-        <button class="btn btn-outline-primary active w-50" id="btnTabUser" onclick="app.switchLoginTab('user')">Usuario</button>
-        <button class="btn btn-outline-primary w-50" id="btnTabAdmin" onclick="app.switchLoginTab('admin')">Admin</button>
+        <button class="btn btn-outline-primary active w-50" id="btnTabUser"
+          onclick="app.switchLoginTab('user')">Usuario</button>
+        <button class="btn btn-outline-primary w-50" id="btnTabAdmin"
+          onclick="app.switchLoginTab('admin')">Admin</button>
       </div>
 
       <form id="loginForm">
         <div id="userLoginFields">
-          <input type="text" class="form-control form-control-lg mb-3 login-input" id="loginName" placeholder="Escribe tu Nombre">
+          <input type="text" class="form-control form-control-lg mb-3 login-input" id="loginName"
+            placeholder="Escribe tu Nombre">
+          <input type="password" class="form-control form-control-lg mb-3 login-input" id="loginPass"
+            placeholder="Contraseña (opcional para huella)">
         </div>
         <div id="adminLoginFields" class="d-none">
-          <input type="text" class="form-control form-control-lg mb-3 login-input" id="adminUser" placeholder="Usuario" value="admin">
-          <input type="password" class="form-control form-control-lg mb-3 login-input" id="adminPass" placeholder="Contraseña">
+          <input type="text" class="form-control form-control-lg mb-3 login-input" id="adminUser" placeholder="Usuario"
+            value="admin">
+          <input type="password" class="form-control form-control-lg mb-3 login-input" id="adminPass"
+            placeholder="Contraseña">
         </div>
         <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold mt-2 login-btn">Ingresar</button>
       </form>
@@ -76,278 +84,288 @@
 </div>
 
 <div id="appContent" class="container mt-4 mb-5 pb-5 d-none">
-    
-    <!-- User View -->
-    <div id="userView">
-      <div class="row mb-4">
-        <div class="col-12 d-flex justify-content-between align-items-center">
-          <h2 class="fw-bold text-dark mb-0">Mis Horas Extra</h2>
-          <button class="btn btn-primary d-flex align-items-center gap-2 btn-lg shadow-sm" data-bs-toggle="modal" data-bs-target="#newRecordModal">
-            <i class="bi bi-plus-lg"></i>
-            <span>Nueva Solicitud</span>
-          </button>
-        </div>
-      </div>
 
-      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" id="userTable">
-              <thead class="table-light">
-                <tr>
-                  <th>Nombre Completo</th>
-                  <th>Área</th>
-                  <th>Horas</th>
-                  <th>Fecha</th>
-                  <th>Motivo</th>
-                  <th>Estado</th>
-                  <th>Firma</th>
-                  <th class="text-end">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="userTableBody">
-                <!-- Data will be populated here -->
-              </tbody>
-            </table>
-          </div>
-          <!-- Loader -->
-          <div id="userLoader" class="text-center py-5 d-none">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
-            <p class="text-muted mt-2">Cargando registros...</p>
-          </div>
-          <!-- Empty State -->
-          <div id="userEmpty" class="text-center py-5 d-none">
-            <i class="bi bi-inbox fs-1 text-muted opacity-50"></i>
-            <h5 class="text-muted mt-3">No hay solicitudes</h5>
-            <p class="text-muted opacity-75 small">Crea tu primera solicitud para verla aquí.</p>
-          </div>
-        </div>
+  <!-- User View -->
+  <div id="userView">
+    <div class="row mb-4">
+      <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2 class="fw-bold text-dark mb-0">Mis Horas Extra</h2>
+        <button class="btn btn-primary d-flex align-items-center gap-2 btn-lg shadow-sm" data-bs-toggle="modal"
+          data-bs-target="#newRecordModal">
+          <i class="bi bi-plus-lg"></i>
+          <span>Nueva Solicitud</span>
+        </button>
       </div>
     </div>
 
-    <!-- Admin View -->
-    <div id="adminView" class="d-none">
-      <div class="row mb-4 align-items-end gap-3 gap-md-0">
-        <div class="col-md-4">
-          <h2 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-            <i class="bi bi-shield-check text-primary"></i>Panel Admin
-          </h2>
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="userTable">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre Completo</th>
+                <th>Área</th>
+                <th>Horas</th>
+                <th>Fecha</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+                <th>Firma</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+              <!-- Data will be populated here -->
+            </tbody>
+          </table>
         </div>
-        <div class="col-md-8 d-flex gap-2 justify-content-md-end flex-wrap align-items-center">
-          <div class="input-group" style="max-width: 250px;">
-            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Buscar...">
+        <!-- Loader -->
+        <div id="userLoader" class="text-center py-5 d-none">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
           </div>
-          <select id="statusFilter" class="form-select w-auto shadow-sm">
-            <option value="">Todos los estados</option>
-            <option value="pendiente">Pendientes</option>
-            <option value="aprobado">Aprobados</option>
-            <option value="rechazado">Rechazados</option>
-          </select>
-          <button class="btn btn-outline-secondary d-flex align-items-center gap-2 shadow-sm" onclick="app.loadData()" title="Refrescar">
-            <i class="bi bi-arrow-clockwise"></i>
-          </button>
-          <button class="btn btn-success d-flex align-items-center gap-2 shadow-sm" onclick="app.exportToCSV()" title="Exportar CSV">
-            <i class="bi bi-file-earmark-excel"></i>
-          </button>
+          <p class="text-muted mt-2">Cargando registros...</p>
         </div>
-      </div>
-
-      <div class="row mb-4">
-        <div class="col-md-3">
-          <div class="card border-0 shadow-sm rounded-4 text-center p-3 stat-card gradient-primary">
-            <h6 class="text-white opacity-75 mb-1">Total Solicitudes</h6>
-            <h3 class="fw-bold mb-0 text-white" id="statTotal">0</h3>
-          </div>
-        </div>
-        <div class="col-md-3 mt-3 mt-md-0">
-          <div class="card border-0 shadow-sm rounded-4 text-center p-3 stat-card gradient-warning">
-            <h6 class="text-dark opacity-75 mb-1">Pendientes</h6>
-            <h3 class="fw-bold mb-0 text-dark" id="statPendiente">0</h3>
-          </div>
-        </div>
-        <div class="col-md-3 mt-3 mt-md-0">
-          <div class="card border-0 shadow-sm rounded-4 text-center p-3 stat-card gradient-success">
-            <h6 class="text-white opacity-75 mb-1">Aprobadas</h6>
-            <h3 class="fw-bold mb-0 text-white" id="statAprobado">0</h3>
-          </div>
-        </div>
-        <div class="col-md-3 mt-3 mt-md-0">
-          <div class="card border-0 shadow-sm rounded-4 text-center p-3 stat-card gradient-danger">
-            <h6 class="text-white opacity-75 mb-1">Rechazadas</h6>
-            <h3 class="fw-bold mb-0 text-white" id="statRechazado">0</h3>
-          </div>
-        </div>
-      </div>
-
-      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" id="adminTable">
-              <thead class="table-light">
-                <tr>
-                  <th>Nombre Completo</th>
-                  <th>Área</th>
-                  <th>Horas</th>
-                  <th>Fecha</th>
-                  <th>Motivo</th>
-                  <th>Estado</th>
-                  <th>Firmado</th>
-                  <th class="text-end">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="adminTableBody">
-                <!-- Data will be populated here -->
-              </tbody>
-            </table>
-          </div>
-          <!-- Loader -->
-          <div id="adminLoader" class="text-center py-5 d-none">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
-          </div>
-          <!-- Empty State -->
-          <div id="adminEmpty" class="text-center py-5 d-none">
-            <i class="bi bi-search fs-1 text-muted opacity-50"></i>
-            <h5 class="text-muted mt-3">No hay resultados</h5>
-          </div>
+        <!-- Empty State -->
+        <div id="userEmpty" class="text-center py-5 d-none">
+          <i class="bi bi-inbox fs-1 text-muted opacity-50"></i>
+          <h5 class="text-muted mt-3">No hay solicitudes</h5>
+          <p class="text-muted opacity-75 small">Crea tu primera solicitud para verla aquí.</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- New Record Modal -->
-  <div class="modal fade" id="newRecordModal" tabindex="-1" aria-labelledby="newRecordModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-title fw-bold" id="newRecordModalLabel">Registrar Horas Extra</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <!-- Admin View -->
+  <div id="adminView" class="d-none">
+    <div class="row mb-4 align-items-end gap-3 gap-md-0">
+      <div class="col-md-4">
+        <h2 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+          <i class="bi bi-shield-check text-primary"></i>Panel Admin
+        </h2>
+      </div>
+      <div class="col-md-8 d-flex gap-2 justify-content-md-end flex-wrap align-items-center">
+        <div class="input-group" style="max-width: 250px;">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+          <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Buscar...">
         </div>
-        <div class="modal-body pt-3 pb-4">
-          <form id="recordForm">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label text-muted small fw-bold">Nombre</label>
-                <input type="text" class="form-control" id="nombre" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label text-muted small fw-bold">Apellido</label>
-                <input type="text" class="form-control" id="apellido" required>
-              </div>
-              <div class="col-md-12">
-                <label class="form-label text-muted small fw-bold">Área</label>
-                <select class="form-select" id="area" required>
-                  <option value="" selected disabled>Seleccione un área...</option>
-                  <option value="Operaciones">Operaciones</option>
-                  <option value="Administración">Administración</option>
-                  <option value="Sistemas">Sistemas</option>
-                  <option value="Ventas">Ventas</option>
-                  <option value="Producción">Producción</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label text-muted small fw-bold">Horas</label>
-                <input type="number" class="form-control" id="horas" min="0.5" step="0.5" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label text-muted small fw-bold">Fecha</label>
-                <input type="date" class="form-control" id="fecha" required>
-              </div>
-              <div class="col-12 mt-2">
-                <label class="form-label text-muted small fw-bold">Motivo</label>
-                <textarea class="form-control" id="motivo" rows="2" required></textarea>
-              </div>
-              <div class="col-12 mt-2">
-                <label class="form-label text-muted small fw-bold">Adjuntar Firma (Usuario)</label>
-                <input class="form-control" type="file" id="creacionFirma" accept="image/*" required>
-              </div>
-            </div>
-            <div class="d-grid mt-4">
-              <button type="submit" class="btn btn-primary py-2 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-2" id="submitBtn">
-                <span>Enviar Solicitud</span>
-                <div class="spinner-border spinner-border-sm d-none" role="status" id="submitLoader"></div>
-              </button>
-            </div>
-          </form>
+        <select id="statusFilter" class="form-select w-auto shadow-sm">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendientes</option>
+          <option value="aprobado">Aprobados</option>
+          <option value="rechazado">Rechazados</option>
+        </select>
+        <button class="btn btn-outline-secondary d-flex align-items-center gap-2 shadow-sm" onclick="app.loadData()"
+          title="Refrescar">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <button class="btn btn-success d-flex align-items-center gap-2 shadow-sm" onclick="app.exportToCSV()"
+          title="Exportar CSV">
+          <i class="bi bi-file-earmark-excel"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 text-center p-3 stat-card gradient-primary">
+          <h6 class="text-white opacity-75 mb-1">Total Solicitudes</h6>
+          <h3 class="fw-bold mb-0 text-white" id="statTotal">0</h3>
+        </div>
+      </div>
+      <div class="col-md-3 mt-3 mt-md-0">
+        <div class="card border-0 shadow-sm rounded-4 text-center p-3 stat-card gradient-warning">
+          <h6 class="text-dark opacity-75 mb-1">Pendientes</h6>
+          <h3 class="fw-bold mb-0 text-dark" id="statPendiente">0</h3>
+        </div>
+      </div>
+      <div class="col-md-3 mt-3 mt-md-0">
+        <div class="card border-0 shadow-sm rounded-4 text-center p-3 stat-card gradient-success">
+          <h6 class="text-white opacity-75 mb-1">Aprobadas</h6>
+          <h3 class="fw-bold mb-0 text-white" id="statAprobado">0</h3>
+        </div>
+      </div>
+      <div class="col-md-3 mt-3 mt-md-0">
+        <div class="card border-0 shadow-sm rounded-4 text-center p-3 stat-card gradient-danger">
+          <h6 class="text-white opacity-75 mb-1">Rechazadas</h6>
+          <h3 class="fw-bold mb-0 text-white" id="statRechazado">0</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="adminTable">
+            <thead class="table-light">
+              <tr>
+                <th>Nombre Completo</th>
+                <th>Área</th>
+                <th>Horas</th>
+                <th>Fecha</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+                <th>Firmado</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody">
+              <!-- Data will be populated here -->
+            </tbody>
+          </table>
+        </div>
+        <!-- Loader -->
+        <div id="adminLoader" class="text-center py-5 d-none">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </div>
+        <!-- Empty State -->
+        <div id="adminEmpty" class="text-center py-5 d-none">
+          <i class="bi bi-search fs-1 text-muted opacity-50"></i>
+          <h5 class="text-muted mt-3">No hay resultados</h5>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Image Viewer Modal -->
-  <div class="modal fade" id="imageViewerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow rounded-4 bg-transparent text-center">
-          <div class="position-relative d-inline-block">
-            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 shadow" data-bs-dismiss="modal" style="z-index: 1040;"></button>
-            <img id="fullSizeImage" src="" class="img-fluid rounded-4 shadow-lg" style="max-height: 80vh; border: 4px solid white;">
+<!-- New Record Modal -->
+<div class="modal fade" id="newRecordModal" tabindex="-1" aria-labelledby="newRecordModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold" id="newRecordModalLabel">Registrar Horas Extra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-3 pb-4">
+        <form id="recordForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label text-muted small fw-bold">Nombre</label>
+              <input type="text" class="form-control" id="nombre" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small fw-bold">Apellido</label>
+              <input type="text" class="form-control" id="apellido" required>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label text-muted small fw-bold">Área</label>
+              <select class="form-select" id="area" required>
+                <option value="" selected disabled>Seleccione un área...</option>
+                <option value="Operaciones">Operaciones</option>
+                <option value="Administración">Administración</option>
+                <option value="Sistemas">Sistemas</option>
+                <option value="Ventas">Ventas</option>
+                <option value="Producción">Producción</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small fw-bold">Horas</label>
+              <input type="number" class="form-control" id="horas" min="0.5" step="0.5" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted small fw-bold">Fecha</label>
+              <input type="date" class="form-control" id="fecha" required>
+            </div>
+            <div class="col-12 mt-2">
+              <label class="form-label text-muted small fw-bold">Motivo</label>
+              <textarea class="form-control" id="motivo" rows="2" required></textarea>
+            </div>
+            <div class="col-12 mt-2">
+              <label class="form-label text-muted small fw-bold">Adjuntar Firma (Usuario)</label>
+              <input class="form-control" type="file" id="creacionFirma" accept="image/*" required>
+            </div>
           </div>
+          <div class="d-grid mt-4">
+            <button type="submit"
+              class="btn btn-primary py-2 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-2"
+              id="submitBtn">
+              <span>Enviar Solicitud</span>
+              <div class="spinner-border spinner-border-sm d-none" role="status" id="submitLoader"></div>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Request Details Modal -->
-  <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-title fw-bold">Detalle de Solicitud</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Image Viewer Modal -->
+<div class="modal fade" id="imageViewerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4 bg-transparent text-center">
+      <div class="position-relative d-inline-block">
+        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 shadow"
+          data-bs-dismiss="modal" style="z-index: 1040;"></button>
+        <img id="fullSizeImage" src="" class="img-fluid rounded-4 shadow-lg"
+          style="max-height: 80vh; border: 4px solid white;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Request Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold">Detalle de Solicitud</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-3 pb-4">
+        <div class="mb-3">
+          <h6 class="text-muted small fw-bold mb-1">Empleado</h6>
+          <div class="fs-6 fw-semibold" id="detailNombre"></div>
         </div>
-        <div class="modal-body pt-3 pb-4">
-          <div class="mb-3">
-            <h6 class="text-muted small fw-bold mb-1">Empleado</h6>
-            <div class="fs-6 fw-semibold" id="detailNombre"></div>
+        <div class="row mb-3">
+          <div class="col-6">
+            <h6 class="text-muted small fw-bold mb-1">Área</h6>
+            <div id="detailArea"></div>
           </div>
-          <div class="row mb-3">
-            <div class="col-6">
-              <h6 class="text-muted small fw-bold mb-1">Área</h6>
-              <div id="detailArea"></div>
-            </div>
-            <div class="col-6">
-              <h6 class="text-muted small fw-bold mb-1">Fecha</h6>
-              <div id="detailFecha"></div>
-            </div>
+          <div class="col-6">
+            <h6 class="text-muted small fw-bold mb-1">Fecha</h6>
+            <div id="detailFecha"></div>
           </div>
-          <div class="row mb-3">
-            <div class="col-6">
-              <h6 class="text-muted small fw-bold mb-1">Horas Extra</h6>
-              <div class="text-primary fw-bold" id="detailHoras"></div>
-            </div>
-            <div class="col-6">
-              <h6 class="text-muted small fw-bold mb-1">Estado</h6>
-              <div id="detailEstado"></div>
-            </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-6">
+            <h6 class="text-muted small fw-bold mb-1">Horas Extra</h6>
+            <div class="text-primary fw-bold" id="detailHoras"></div>
           </div>
-          <div class="mb-2">
-            <h6 class="text-muted small fw-bold mb-1">Motivo completo</h6>
-            <div class="p-3 bg-light rounded shadow-sm text-dark" style="white-space: pre-wrap;" id="detailMotivo"></div>
+          <div class="col-6">
+            <h6 class="text-muted small fw-bold mb-1">Estado</h6>
+            <div id="detailEstado"></div>
           </div>
+        </div>
+        <div class="mb-2">
+          <h6 class="text-muted small fw-bold mb-1">Motivo completo</h6>
+          <div class="p-3 bg-light rounded shadow-sm text-dark" style="white-space: pre-wrap;" id="detailMotivo"></div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Toast Container -->
-  <div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="liveToast" class="toast border-0 shadow align-items-center text-bg-primary" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="d-flex">
-        <div class="toast-body d-flex align-items-center gap-2">
-          <i class="bi bi-info-circle-fill" id="toastIcon"></i>
-          <span id="toastMessage">Mensaje</span>
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="liveToast" class="toast border-0 shadow align-items-center text-bg-primary" role="alert"
+    aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body d-flex align-items-center gap-2">
+        <i class="bi bi-info-circle-fill" id="toastIcon"></i>
+        <span id="toastMessage">Mensaje</span>
       </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+        aria-label="Close"></button>
     </div>
   </div>
+</div>
 
-  <!-- Bootstrap JS Bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Application JS -->
-  <script src="js/app.js"></script>
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Application JS -->
+<script src="js/app.js"></script>
 </body>
+
 </html>
