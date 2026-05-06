@@ -500,6 +500,7 @@ body {
   /* Gradiente radial para simular volumen 3D en tonos azules */
   background: radial-gradient(circle at 30% 30%, #60a5fa, #3b82f6 40%, #1e3a8a 80%);
   box-shadow: 0 20px 50px rgba(29, 78, 216, 0.3);
+  opacity: 0.85; /* Un poco transparentes, no tanto */
   animation: float-sphere ease-in-out infinite alternate;
   z-index: 0;
 }
