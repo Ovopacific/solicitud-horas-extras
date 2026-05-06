@@ -429,9 +429,15 @@ const app = {
       const r = {};
       cols.forEach(c => {
         let val = i[c.k];
-        // Si es el campo fecha, lo formateamos para el Excel
+        // Formateo específico para Excel
         if (c.k === 'fecha' || c.k === 'fecha_creacion') {
-          val = this.formatDate(val);
+          if (val && typeof val === 'string' && val.includes('T')) {
+            val = val.split('T')[0]; // Extrae solo YYYY-MM-DD
+            const [y, m, d] = val.split('-');
+            val = `${d}/${m}/${y}`; // Formato DD/MM/AAAA
+          } else {
+            val = this.formatDate(val);
+          }
         }
         r[c.l] = val;
       });
