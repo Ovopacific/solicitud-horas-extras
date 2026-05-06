@@ -355,11 +355,14 @@ body {
 }
 
 .login-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.35); /* Mucho más transparente */
+  backdrop-filter: blur(25px); /* Desenfoque más fuerte */
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.6); /* Borde blanco sutil */
   border-radius: 30px;
   transform-style: preserve-3d;
   transition: transform 0.1s ease-out;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .login-icon-box {
@@ -485,18 +488,18 @@ body {
   transform: scale(1.05);
 }
 
-/* Partículas de Energía (Fondo Claro) */
-.small-particle {
+/* Esferas Gigantes 3D (Efecto Glassmorphism) */
+.glass-sphere {
   position: absolute;
   border-radius: 50%;
-  background: rgba(79, 70, 229, 0.8) !important; /* Azul intenso */
-  box-shadow: 0 0 15px rgba(79, 70, 229, 0.6) !important; /* Brillo fuerte */
-  top: 100vh; /* Inicia al fondo de la pantalla */
-  animation: particle-float linear infinite;
-  pointer-events: none;
+  /* Gradiente radial para simular volumen 3D en tonos azules */
+  background: radial-gradient(circle at 30% 30%, #60a5fa, #3b82f6 40%, #1e3a8a 80%);
+  box-shadow: 0 20px 50px rgba(29, 78, 216, 0.3);
+  animation: float-sphere ease-in-out infinite alternate;
+  z-index: 0;
 }
 
-@keyframes particle-float {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-120vh); }
+@keyframes float-sphere {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-60px) scale(1.05); }
 }

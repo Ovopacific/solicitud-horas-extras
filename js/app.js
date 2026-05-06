@@ -516,20 +516,24 @@ const app = {
   createParticles() {
     const container = document.getElementById('bg-container');
     container.innerHTML = ''; 
-    for (let i = 0; i < 30; i++) {
+    
+    // Creamos 6 esferas gigantes para el efecto Glassmorphism
+    for (let i = 0; i < 6; i++) {
       const p = document.createElement('div');
-      p.className = 'small-particle';
-      p.style.left = `${Math.random() * 100}vw`;
-      p.style.animationDuration = `${4 + Math.random() * 6}s`; // Mucho más rápidas (4s a 10s)
-      p.style.animationDelay = `${Math.random() * 3}s`;
+      p.className = 'glass-sphere';
       
-      // Tamaños GIGANTES para asegurar que se vean
-      const size = 15 + Math.random() * 25; // Entre 15px y 40px
+      // Posiciones aleatorias
+      p.style.left = `${Math.random() * 80}vw`;
+      p.style.top = `${Math.random() * 80}vh`;
+      
+      // Tamaños enormes (entre 200px y 500px)
+      const size = 200 + Math.random() * 300; 
       p.style.width = `${size}px`;
       p.style.height = `${size}px`;
       
-      // Opacidad altísima
-      p.style.opacity = Math.random() * 0.5 + 0.5; // Entre 0.5 y 1.0
+      // Animación súper suave y lenta
+      p.style.animationDuration = `${15 + Math.random() * 15}s`;
+      p.style.animationDelay = `-${Math.random() * 10}s`; // Tiempo negativo para que ya estén desfasadas
       
       container.appendChild(p);
     }
