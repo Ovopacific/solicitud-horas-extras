@@ -491,7 +491,7 @@ body {
   border-radius: 50%;
   background: rgba(79, 70, 229, 0.4); /* Tono azul/púrpura muy sutil */
   box-shadow: 0 0 4px rgba(79, 70, 229, 0.2);
-  top: 110vh;
+  top: 0; /* Corrección: debe ser 0 para que translateY funcione bien */
   animation: float-up linear infinite;
   pointer-events: none;
 }
