@@ -8,7 +8,7 @@ const app = {
   // 1. CONFIGURACIÓN Y ESTADO
   // ==========================================
   config: {
-    apiUrl: 'https://script.google.com/macros/s/AKfycby1FsCAwl01GH-Xf1BpLBz6cvmQ0AAvNsMd_8THACGirerJVVSFMIZTkdpBlzR3h1NN/exec'
+    apiUrl: 'https://script.google.com/macros/s/AKfycbx10Nvtp8btjVK3_Fq8pkwLA6Q3GM-HDaewm1i1AYMp3OAhj3z2z4dPB3E9-2azxwRU/exec'
   },
 
   state: {
@@ -28,7 +28,7 @@ const app = {
   init() {
     this.cacheElements();
     this.setupEventListeners();
-    
+
     // Inicialización de UI
     setTimeout(() => this.init3DLogin(), 100);
     this.initWaterRipple();
@@ -94,7 +94,7 @@ const app = {
   async login() {
     const btn = document.querySelector('.login-btn');
     const originalText = btn.innerHTML;
-    
+
     try {
       this.setLoading(btn, true, 'Verificando...');
 
@@ -114,7 +114,7 @@ const app = {
       } else {
         const name = document.getElementById('loginName').value.trim();
         const pass = document.getElementById('loginPass').value.trim();
-        
+
         if (!name || !pass) {
           this.showToast('Ingresa nombre y contraseña', 'warning');
           return;
@@ -142,10 +142,10 @@ const app = {
     this.el.loginScreen.classList.add('d-none');
     this.el.appContent.classList.remove('d-none');
     this.el.mainNav.classList.remove('d-none');
-    
+
     this.el.roleBadge.innerText = `Hola, ${this.state.currentUser}`;
     this.el.roleBadge.className = `badge bg-light text-primary py-2 px-3 border rounded-pill`;
-    
+
     this.loadData();
     this.updateUIByRole();
   },
@@ -185,7 +185,7 @@ const app = {
     const originalText = btn.innerHTML;
 
     this.setLoading(btn, true, 'Enviando...');
-    
+
     try {
       let base64 = file ? await this.compressImage(file) : '';
       const payload = {
@@ -466,8 +466,8 @@ const app = {
     wrap.onmousemove = (e) => {
       const r = wrap.getBoundingClientRect();
       const x = e.clientX - r.left, y = e.clientY - r.top;
-      const rx = ((y - r.height/2) / (r.height/2)) * -15;
-      const ry = ((x - r.width/2) / (r.width/2)) * 15;
+      const rx = ((y - r.height / 2) / (r.height / 2)) * -15;
+      const ry = ((x - r.width / 2) / (r.width / 2)) * 15;
       card.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) scale3d(1.02, 1.02, 1.02)`;
     };
     wrap.onmouseleave = () => card.style.transform = `rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
