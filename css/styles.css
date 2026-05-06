@@ -277,3 +277,17 @@ body {
   0% { background: rgba(16, 185, 129, 0.1); }
   100% { background: transparent; }
 }
+
+/* Identidad Corporativa */
+.login-logo-box {
+  max-width: 140px;
+  margin: 0 auto;
+}
+.login-logo {
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
+  transition: transform 0.3s ease;
+}
+.login-card:hover .login-logo {
+  transform: scale(1.05);
+}
+
