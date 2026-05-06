@@ -8,7 +8,7 @@ const app = {
   // 1. CONFIGURACIÓN Y ESTADO
   // ==========================================
   config: {
-    apiUrl: 'https://script.google.com/macros/s/AKfycbx10Nvtp8btjVK3_Fq8pkwLA6Q3GM-HDaewm1i1AYMp3OAhj3z2z4dPB3E9-2azxwRU/exec'
+    apiUrl: 'https://script.google.com/macros/s/AKfycbyPYTNiJ0rV3YP-hbSWa8n5BpjTVL75AHvbEdIVoC1vLmQ6JnLA9P2dj8prmZe2kQiq/exec'
   },
 
   state: {
