@@ -62,7 +62,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(at 0% 0%, #0f172a 0%, #1e293b 100%); /* Fondo nocturno */
+  background: radial-gradient(at 0% 0%, #475569 0%, #1e293b 100%); /* Día lluvioso / Ventana oscura */
   overflow: hidden;
 }
 
@@ -286,23 +286,222 @@ body {
 .login-logo {
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
   transition: transform 0.3s ease;
+@keyframes float-up {
+  from { transform: translateY(100vh); opacity: 0; }
+  to { transform: translateY(-10vh); opacity: 0.5; }
+}
+
+/* 4. LAYOUT & GLASSMORPHISM */
+.glass-nav {
+  background: rgba(79, 70, 229, 0.9) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.card {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 20px !important;
+}
+
+/* 5. TABLAS & ESTADOS */
+.table thead th {
+  background: rgba(255,255,255,0.4);
+  color: var(--slate-600);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid rgba(0,0,0,0.05);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.status-pendiente { background: #fffbeb; color: #92400e; border: 1px solid #fef3c7; }
+.status-pendiente .status-dot { background: #f59e0b; }
+
+.status-aprobado { background: #ecfdf5; color: #065f46; border: 1px solid #d1fae5; }
+.status-aprobado .status-dot { background: #10b981; }
+
+.status-rechazado { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
+.status-rechazado .status-dot { background: #ef4444; }
+
+/* 6. LOGIN (3D & ANIMATION) */
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card-wrapper {
+  perspective: 1000px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border-radius: 30px;
+  transform-style: preserve-3d;
+  transition: transform 0.1s ease-out;
+}
+
+.login-icon-box {
+  width: 70px; height: 70px;
+  background: white;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.header-glow {
+  background: linear-gradient(45deg, var(--p-600), var(--success));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 7. COMPONENTES UI */
+.btn {
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--p-600);
+  border: none;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.btn-primary:hover {
+  background: var(--p-500);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(79, 70, 229, 0.4);
+}
+
+.stat-card {
+  border-left: 4px solid var(--p-500) !important;
+}
+.stat-card.gradient-warning { border-left-color: var(--warning) !important; }
+.stat-card.gradient-success { border-left-color: var(--success) !important; }
+.stat-card.gradient-danger { border-left-color: var(--danger) !important; }
+
+/* 8. RESPONSIVE & FIXES */
+#adminView .card, 
+#adminView .card-body,
+.table-responsive {
+  overflow: visible !important; /* Evita que la tarjeta corte el menú desplegable */
+}
+
+.table-responsive {
+  border-radius: 15px;
+  padding-bottom: 80px; /* Espacio extra para que el menú respire */
+}
+
+@media (max-width: 768px) {
+  .table-responsive { 
+    overflow-x: auto !important; /* En móviles mantenemos el scroll horizontal */
+    padding-bottom: 100px;
+  }
+}
+
+.dropdown-menu {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  border-radius: 12px;
+  padding: 8px;
+  z-index: 1060; /* Asegura que esté por encima de todo */
+}
+
+.dropdown-item {
+  border-radius: 8px;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+
+/* 9. MODALES Y DETALLES */
+#detailMotivo, .modal-body p {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap; /* Mantiene los saltos de línea del usuario */
+}
+
+/* 10. RIPPLE & UPDATES */
+.water-ripple {
+  position: fixed;
+  width: 150px; height: 150px;
+  border: 2px solid rgba(99, 102, 241, 0.3);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: ripple 0.8s ease-out forwards;
+}
+
+@keyframes ripple {
+  from { transform: scale(0); opacity: 1; }
+  to { transform: scale(3); opacity: 0; }
+}
+
+.row-update {
+  animation: highlight-row 1.5s ease;
+}
+
+@keyframes highlight-row {
+  0% { background: rgba(16, 185, 129, 0.1); }
+  100% { background: transparent; }
+}
+
+/* Identidad Corporativa */
+.login-logo-box {
+  max-width: 140px;
+  margin: 0 auto;
+}
+.login-logo {
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
+  transition: transform 0.3s ease;
 }
 .login-card:hover .login-logo {
   transform: scale(1.05);
 }
 
-/* Efecto de Lluvia */
+/* Efecto Ventana Lluviosa */
 .rain-drop {
   position: absolute;
-  width: 2px;
-  height: 60px;
-  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.4));
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    inset 0 2px 3px rgba(255, 255, 255, 0.4),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.3);
   top: -60px;
   animation: rain linear infinite;
   pointer-events: none;
 }
 
 @keyframes rain {
-  0% { transform: translateY(-60px); }
-  100% { transform: translateY(110vh); }
+  0% { transform: translateY(-60px) scale(1); opacity: 0; }
+  10% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(110vh) scale(0.8); opacity: 0; }
 }

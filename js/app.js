@@ -515,18 +515,20 @@ const app = {
 
   createRain() {
     const container = document.getElementById('bg-container');
-    container.innerHTML = ''; // Limpiar cualquier fondo previo
-    // Creamos 100 gotas de lluvia
-    for (let i = 0; i < 100; i++) {
+    container.innerHTML = ''; 
+    for (let i = 0; i < 60; i++) {
       const drop = document.createElement('div');
       drop.className = 'rain-drop';
-      // Posición horizontal aleatoria
       drop.style.left = `${Math.random() * 100}vw`;
-      // Velocidad y opacidad aleatoria para dar profundidad
-      const duration = Math.random() * 0.5 + 0.4;
+      
+      // Tamaño asimétrico para parecer una gota de agua escurriendo
+      const size = 3 + Math.random() * 5; 
+      drop.style.width = `${size}px`;
+      drop.style.height = `${size + Math.random() * 15}px`;
+      
+      const duration = 2 + Math.random() * 3; // Caída más lenta, como en cristal
       drop.style.animationDuration = `${duration}s`;
-      drop.style.animationDelay = `${Math.random() * 2}s`;
-      drop.style.opacity = Math.random() * 0.5 + 0.1;
+      drop.style.animationDelay = `${Math.random() * 5}s`;
       container.appendChild(drop);
     }
   },
