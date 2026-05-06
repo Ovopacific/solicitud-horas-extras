@@ -485,23 +485,13 @@ body {
   transform: scale(1.05);
 }
 
-/* Efecto Ventana Lluviosa (Fondo Claro) */
-.rain-drop {
+/* Partículas sutiles (Fondo Claro) */
+.small-particle {
   position: absolute;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.03); /* Ligeramente oscuro para dar contraste en fondo claro */
-  box-shadow: 
-    inset 0 2px 4px rgba(255, 255, 255, 0.9), /* Brillo fuerte arriba */
-    inset 0 -1px 3px rgba(0, 0, 0, 0.15),     /* Sombra interna abajo */
-    0 2px 4px rgba(0, 0, 0, 0.1);             /* Sombra en el cristal */
-  top: -60px;
-  animation: rain linear infinite;
+  background: rgba(79, 70, 229, 0.4); /* Tono azul/púrpura muy sutil */
+  box-shadow: 0 0 4px rgba(79, 70, 229, 0.2);
+  top: 110vh;
+  animation: float-up linear infinite;
   pointer-events: none;
-}
-
-@keyframes rain {
-  0% { transform: translateY(-60px) scale(1); opacity: 0; }
-  10% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { transform: translateY(110vh) scale(0.8); opacity: 0; }
 }

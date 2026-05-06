@@ -33,7 +33,7 @@ const app = {
     setTimeout(() => this.init3DLogin(), 100);
     this.initWaterRipple();
     this.initCustomCursor();
-    this.createRain();
+    this.createParticles();
 
     // Fecha por defecto
     if (this.el.fechaInput) {
@@ -513,23 +513,23 @@ const app = {
     anim();
   },
 
-  createRain() {
+  createParticles() {
     const container = document.getElementById('bg-container');
     container.innerHTML = ''; 
-    for (let i = 0; i < 60; i++) {
-      const drop = document.createElement('div');
-      drop.className = 'rain-drop';
-      drop.style.left = `${Math.random() * 100}vw`;
+    for (let i = 0; i < 50; i++) {
+      const p = document.createElement('div');
+      p.className = 'small-particle';
+      p.style.left = `${Math.random() * 100}vw`;
+      p.style.animationDuration = `${15 + Math.random() * 20}s`;
+      p.style.animationDelay = `${Math.random() * 5}s`;
       
-      // Tamaño asimétrico para parecer una gota de agua escurriendo
-      const size = 3 + Math.random() * 5; 
-      drop.style.width = `${size}px`;
-      drop.style.height = `${size + Math.random() * 15}px`;
+      // Tamaños muy pequeños para dar un efecto sutil tipo "polvo estelar" o tecnología
+      const size = 1 + Math.random() * 3;
+      p.style.width = `${size}px`;
+      p.style.height = `${size}px`;
+      p.style.opacity = Math.random() * 0.4 + 0.1;
       
-      const duration = 2 + Math.random() * 3; // Caída más lenta, como en cristal
-      drop.style.animationDuration = `${duration}s`;
-      drop.style.animationDelay = `${Math.random() * 5}s`;
-      container.appendChild(drop);
+      container.appendChild(p);
     }
   },
 
