@@ -247,7 +247,14 @@ body {
   font-weight: 500;
 }
 
-/* 9. RIPPLE & UPDATES */
+/* 9. MODALES Y DETALLES */
+#detailMotivo, .modal-body p {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap; /* Mantiene los saltos de línea del usuario */
+}
+
+/* 10. RIPPLE & UPDATES */
 .water-ripple {
   position: fixed;
   width: 150px; height: 150px;
