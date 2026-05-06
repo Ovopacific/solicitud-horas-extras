@@ -115,116 +115,26 @@ const app = {
         const name = document.getElementById('loginName').value.trim();
         const pass = document.getElementById('loginPass').value.trim();
         
-        if (name.length < 3) {
-          this.showToast('Ingresa un nombre válido', 'warning');
+        if (!name || !pass) {
+          this.showToast('Ingresa nombre y contraseña', 'warning');
           return;
         }
 
-        if (pass.length > 0) {
-          await this.handleUserPasswordLogin(name, pass);
+        const res = await this.fetchAPI('login_user_password', { nombre: name, password: pass });
+        if (res.success) {
+          this.state.role = 'user';
+          this.state.currentUser = name;
+          this.state.sessionToken = res.token;
+          document.getElementById('nombre').value = name;
+          this.completeLogin();
         } else {
-          await this.handleUserLoginWebAuthn(name);
+          this.showToast(res.error || 'Acceso denegado', 'danger');
         }
       }
     } catch (error) {
       this.showToast('Error de conexión', 'danger');
     } finally {
       this.setLoading(btn, false, originalText);
-    }
-  },
-
-  async handleUserPasswordLogin(name, pass) {
-    const res = await this.fetchAPI('login_user_password', { nombre: name, password: pass });
-    if (res.success) {
-      this.state.role = 'user';
-      this.state.currentUser = name;
-      this.state.sessionToken = res.token;
-      document.getElementById('nombre').value = name;
-      this.completeLogin();
-    } else {
-      this.showToast(res.error || 'Acceso denegado', 'danger');
-    }
-  },
-
-  async handleUserLoginWebAuthn(name) {
-    if (!window.PublicKeyCredential) {
-      this.showToast('Biometría no soportada en este navegador', 'danger');
-      return;
-    }
-
-    const check = await this.fetchAPI('webauthn_check', { nombre: name });
-    if (!check.success) {
-      this.showToast(check.error, 'danger');
-      return;
-    }
-
-    if (check.isRegistered) {
-      this.showToast('Usa tu huella/PIN para acceder...', 'info');
-      try {
-        const assertion = await navigator.credentials.get({
-          publicKey: {
-            challenge: this.base64urlToBuffer(check.challenge),
-            allowCredentials: [{
-              id: this.base64urlToBuffer(check.credentialId),
-              type: 'public-key',
-              transports: ['internal', 'usb', 'ble', 'nfc']
-            }],
-            userVerification: 'required',
-            timeout: 60000
-          }
-        });
-        const credId = this.bufferToBase64url(assertion.rawId);
-        const verify = await this.fetchAPI('webauthn_verify', { nombre: name, credentialId: credId });
-        
-        if (verify.success) {
-          this.state.role = 'user';
-          this.state.currentUser = name;
-          this.state.sessionToken = verify.token;
-          document.getElementById('nombre').value = name;
-          this.completeLogin();
-        } else {
-          this.showToast('Fallo de autenticación biométrica', 'danger');
-        }
-      } catch (e) {
-        this.showToast('Autenticación cancelada', 'info');
-      }
-    } else {
-      await this.registerWebAuthn(name, check.challenge);
-    }
-  },
-
-  async registerWebAuthn(name, challenge) {
-    if (!confirm(`Hola ${name}. ¿Deseas registrar este dispositivo con tu huella/PIN?`)) return;
-
-    try {
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge: this.base64urlToBuffer(challenge),
-          rp: { name: 'Ovopacific Extras' },
-          user: {
-            id: this.base64urlToBuffer(this.bufferToBase64url(new TextEncoder().encode(name))),
-            name: name,
-            displayName: name
-          },
-          pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
-          timeout: 60000,
-          attestation: 'none'
-        }
-      });
-      const credId = this.bufferToBase64url(credential.rawId);
-      const reg = await this.fetchAPI('webauthn_register', { nombre: name, credentialId: credId });
-      
-      if (reg.success) {
-        this.showToast('¡Dispositivo registrado!', 'success');
-        this.state.role = 'user';
-        this.state.currentUser = name;
-        this.state.sessionToken = reg.token;
-        document.getElementById('nombre').value = name;
-        this.completeLogin();
-      }
-    } catch (e) {
-      this.showToast('Registro fallido', 'danger');
     }
   },
 
