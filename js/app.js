@@ -427,7 +427,14 @@ const app = {
     ];
     const rows = this.state.data.map(i => {
       const r = {};
-      cols.forEach(c => r[c.l] = i[c.k]);
+      cols.forEach(c => {
+        let val = i[c.k];
+        // Si es el campo fecha, lo formateamos para el Excel
+        if (c.k === 'fecha' || c.k === 'fecha_creacion') {
+          val = this.formatDate(val);
+        }
+        r[c.l] = val;
+      });
       return r;
     });
     const ws = XLSX.utils.json_to_sheet(rows);
