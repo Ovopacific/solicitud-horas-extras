@@ -485,13 +485,18 @@ body {
   transform: scale(1.05);
 }
 
-/* Partículas sutiles (Fondo Claro) */
+/* Partículas de Energía (Fondo Claro) */
 .small-particle {
   position: absolute;
   border-radius: 50%;
-  background: rgba(79, 70, 229, 0.7); /* Azul más fuerte */
-  box-shadow: 0 0 8px rgba(79, 70, 229, 0.5); /* Brillo más intenso */
-  top: 0; 
-  animation: float-up linear infinite;
+  background: rgba(79, 70, 229, 0.8) !important; /* Azul intenso */
+  box-shadow: 0 0 15px rgba(79, 70, 229, 0.6) !important; /* Brillo fuerte */
+  top: 100vh; /* Inicia al fondo de la pantalla */
+  animation: particle-float linear infinite;
   pointer-events: none;
+}
+
+@keyframes particle-float {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-120vh); }
 }

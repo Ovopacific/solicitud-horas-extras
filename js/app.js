@@ -516,20 +516,20 @@ const app = {
   createParticles() {
     const container = document.getElementById('bg-container');
     container.innerHTML = ''; 
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 30; i++) {
       const p = document.createElement('div');
       p.className = 'small-particle';
       p.style.left = `${Math.random() * 100}vw`;
-      p.style.animationDuration = `${10 + Math.random() * 15}s`;
-      p.style.animationDelay = `${Math.random() * 5}s`;
+      p.style.animationDuration = `${4 + Math.random() * 6}s`; // Mucho más rápidas (4s a 10s)
+      p.style.animationDelay = `${Math.random() * 3}s`;
       
-      // Tamaños más grandes para que sean visibles
-      const size = 4 + Math.random() * 8;
+      // Tamaños GIGANTES para asegurar que se vean
+      const size = 15 + Math.random() * 25; // Entre 15px y 40px
       p.style.width = `${size}px`;
       p.style.height = `${size}px`;
       
-      // Más opacidad para que resalten en el fondo claro
-      p.style.opacity = Math.random() * 0.5 + 0.3;
+      // Opacidad altísima
+      p.style.opacity = Math.random() * 0.5 + 0.5; // Entre 0.5 y 1.0
       
       container.appendChild(p);
     }
