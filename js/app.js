@@ -33,7 +33,7 @@ const app = {
     setTimeout(() => this.init3DLogin(), 100);
     this.initWaterRipple();
     this.initCustomCursor();
-    this.createOrbs();
+    this.createRain();
 
     // Fecha por defecto
     if (this.el.fechaInput) {
@@ -513,15 +513,21 @@ const app = {
     anim();
   },
 
-  createOrbs() {
+  createRain() {
     const container = document.getElementById('bg-container');
-    for (let i = 0; i < 40; i++) {
-      const orb = document.createElement('div');
-      orb.className = 'particle';
-      orb.style.left = `${Math.random() * 100}vw`;
-      orb.style.animationDuration = `${10 + Math.random() * 15}s`;
-      orb.style.animationDelay = `${Math.random() * 10}s`;
-      container.appendChild(orb);
+    container.innerHTML = ''; // Limpiar cualquier fondo previo
+    // Creamos 100 gotas de lluvia
+    for (let i = 0; i < 100; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'rain-drop';
+      // Posición horizontal aleatoria
+      drop.style.left = `${Math.random() * 100}vw`;
+      // Velocidad y opacidad aleatoria para dar profundidad
+      const duration = Math.random() * 0.5 + 0.4;
+      drop.style.animationDuration = `${duration}s`;
+      drop.style.animationDelay = `${Math.random() * 2}s`;
+      drop.style.opacity = Math.random() * 0.5 + 0.1;
+      container.appendChild(drop);
     }
   },
 

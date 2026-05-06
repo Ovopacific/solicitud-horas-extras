@@ -291,3 +291,18 @@ body {
   transform: scale(1.05);
 }
 
+/* Efecto de Lluvia */
+.rain-drop {
+  position: absolute;
+  width: 2px;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.4));
+  top: -60px;
+  animation: rain linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rain {
+  0% { transform: translateY(-60px); }
+  100% { transform: translateY(110vh); }
+}
