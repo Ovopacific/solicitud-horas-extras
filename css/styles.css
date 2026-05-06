@@ -62,7 +62,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(at 0% 0%, #f1f5f9 0%, #e2e8f0 100%);
+  background: radial-gradient(at 0% 0%, #0f172a 0%, #1e293b 100%); /* Fondo nocturno */
   overflow: hidden;
 }
 
