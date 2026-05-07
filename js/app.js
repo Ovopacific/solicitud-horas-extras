@@ -8,7 +8,7 @@ const app = {
   // 1. CONFIGURACIÓN Y ESTADO
   // ==========================================
   config: {
-    apiUrl: 'https://script.google.com/macros/s/AKfycbzx2luMg7QJjc-EQU2t6d3uMGVnKgZmsn6eyfgwU8AEgOH2GH330V5VBl0i4EXYpK_q/exec'
+    apiUrl: 'https://script.google.com/macros/s/AKfycbx4hG_1V2MfW8qNYDCeXbmluRelWlejLws4aF0nM_S1h60vKrUP_fDMOb3UA2f6vaI/exec'
   },
 
   state: {
@@ -48,6 +48,9 @@ const app = {
       searchInput: document.getElementById('searchInput'),
       statusFilter: document.getElementById('statusFilter'),
       fechaInput: document.getElementById('fecha'),
+      horaInicioInput: document.getElementById('horaInicio'),
+      horaFinInput: document.getElementById('horaFin'),
+      horasInput: document.getElementById('horas'),
       loginScreen: document.getElementById('loginScreen'),
       appContent: document.getElementById('appContent'),
       mainNav: document.getElementById('mainNav'),
@@ -78,18 +81,31 @@ const app = {
 
     this.el.searchInput?.addEventListener('input', () => this.renderAdminTable());
     this.el.statusFilter?.addEventListener('change', () => this.renderAdminTable());
+
+    const calcHoras = () => {
+      if (this.el.horaInicioInput && this.el.horaFinInput && this.el.horasInput) {
+        if (this.el.horaInicioInput.value && this.el.horaFinInput.value) {
+          const [h1, m1] = this.el.horaInicioInput.value.split(':').map(Number);
+          const [h2, m2] = this.el.horaFinInput.value.split(':').map(Number);
+          let diff = (h2 + m2 / 60) - (h1 + m1 / 60);
+          if (diff < 0) diff += 24;
+
+          const totalMinutos = Math.round(diff * 60);
+          const h = Math.floor(totalMinutos / 60);
+          const m = totalMinutos % 60;
+
+          this.el.horasInput.value = `${h}:${m.toString().padStart(2, '0')}`;
+        }
+      }
+    };
+
+    this.el.horaInicioInput?.addEventListener('change', calcHoras);
+    this.el.horaFinInput?.addEventListener('change', calcHoras);
   },
 
   // ==========================================
   // 3. AUTENTICACIÓN
   // ==========================================
-  switchLoginTab(mode) {
-    this.state.loginMode = mode;
-    document.getElementById('btnTabUser').classList.toggle('active', mode === 'user');
-    document.getElementById('btnTabAdmin').classList.toggle('active', mode === 'admin');
-    document.getElementById('userLoginFields').classList.toggle('d-none', mode === 'admin');
-    document.getElementById('adminLoginFields').classList.toggle('d-none', mode === 'user');
-  },
 
   async login() {
     const btn = document.querySelector('.login-btn');
@@ -98,12 +114,17 @@ const app = {
     try {
       this.setLoading(btn, true, 'Verificando...');
 
-      if (this.state.loginMode === 'admin') {
-        const user = document.getElementById('adminUser').value;
-        const pass = document.getElementById('adminPass').value;
+      const name = document.getElementById('loginName').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
 
+      if (!name || !pass) {
+        this.showToast('Ingresa nombre y contraseña', 'warning');
+        return;
+      }
+
+      if (name.toLowerCase() === 'admin') {
         const response = await this.fetchAPI('login_admin', { password: pass });
-        if (response.success && user === 'admin') {
+        if (response.success) {
           this.state.role = 'admin';
           this.state.currentUser = 'Administrador';
           this.state.sessionToken = response.token;
@@ -112,14 +133,6 @@ const app = {
           this.showToast('Contraseña de administrador incorrecta', 'danger');
         }
       } else {
-        const name = document.getElementById('loginName').value.trim();
-        const pass = document.getElementById('loginPass').value.trim();
-
-        if (!name || !pass) {
-          this.showToast('Ingresa nombre y contraseña', 'warning');
-          return;
-        }
-
         const res = await this.fetchAPI('login_user_password', { nombre: name, password: pass });
         if (res.success) {
           this.state.role = 'user';
@@ -193,6 +206,8 @@ const app = {
         apellido: document.getElementById('apellido').value,
         area: document.getElementById('area').value,
         horas: document.getElementById('horas').value,
+        hora_inicio: document.getElementById('horaInicio').value,
+        hora_fin: document.getElementById('horaFin').value,
         fecha: document.getElementById('fecha').value,
         motivo: document.getElementById('motivo').value,
         firma_img: base64,
@@ -278,7 +293,10 @@ const app = {
           <div class="small text-muted">${item.id ? item.id.substring(0, 8) : ''}</div>
         </td>
         <td><span class="badge bg-light text-dark border">${this.escapeHTML(item.area)}</span></td>
-        <td class="fw-bold">${this.escapeHTML(item.horas)} h</td>
+        <td class="fw-bold">
+          <div>${this.escapeHTML(this.formatHoras(item.horas))} h</div>
+          ${item.hora_inicio && item.hora_fin ? `<div class="small text-muted fw-normal">${this.escapeHTML(this.formatHoras(item.hora_inicio))} - ${this.escapeHTML(this.formatHoras(item.hora_fin))}</div>` : ''}
+        </td>
         <td>${this.escapeHTML(this.formatDate(item.fecha))}</td>
         <td class="small text-muted text-truncate" style="max-width: 150px; cursor: pointer; text-decoration: underline;" onclick="app.viewDetails('${item.id}')">${this.escapeHTML(item.motivo)}</td>
         <td>${this.getStatusBadgeHTML(item.estado)}</td>
@@ -309,7 +327,10 @@ const app = {
           <div class="small text-muted">Sol: ${this.formatDate(item.fecha_creacion, true)}</div>
         </td>
         <td><span class="badge bg-light text-dark border">${this.escapeHTML(item.area)}</span></td>
-        <td class="fw-bold">${this.escapeHTML(item.horas)} h</td>
+        <td class="fw-bold">
+          <div>${this.escapeHTML(this.formatHoras(item.horas))} h</div>
+          ${item.hora_inicio && item.hora_fin ? `<div class="small text-muted fw-normal">${this.escapeHTML(this.formatHoras(item.hora_inicio))} - ${this.escapeHTML(this.formatHoras(item.hora_fin))}</div>` : ''}
+        </td>
         <td>${this.escapeHTML(this.formatDate(item.fecha))}</td>
         <td class="small text-muted text-truncate" style="max-width: 150px; cursor: pointer; text-decoration: underline;" onclick="app.viewDetails('${item.id}')">${this.escapeHTML(item.motivo)}</td>
         <td id="status-cell-${item.id}">${this.getAdminStatusHTML(item.id, item.estado)}</td>
@@ -417,11 +438,27 @@ const app = {
     });
   },
 
+  formatHoras(val) {
+    if (!val) return '0';
+    const s = String(val);
+    if (s.includes('T') && s.includes('1899')) {
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        const h = d.getHours();
+        const m = d.getMinutes().toString().padStart(2, '0');
+        return `${h}:${m}`;
+      }
+    }
+    return s;
+  },
+
   exportToExcel() {
     if (this.state.data.length === 0) return this.showToast('Sin datos', 'warning');
     const cols = [
       { k: 'nombre', l: 'Nombre' }, { k: 'apellido', l: 'Apellido' },
-      { k: 'area', l: 'Área' }, { k: 'horas', l: 'Horas' },
+      { k: 'area', l: 'Área' },
+      { k: 'hora_inicio', l: 'Hora Inicio' }, { k: 'hora_fin', l: 'Hora Fin' },
+      { k: 'horas', l: 'Horas' },
       { k: 'fecha', l: 'Fecha' }, { k: 'motivo', l: 'Motivo' },
       { k: 'estado', l: 'Estado' }
     ];
@@ -438,6 +475,8 @@ const app = {
           } else {
             val = this.formatDate(val);
           }
+        } else if (c.k === 'horas' || c.k === 'hora_inicio' || c.k === 'hora_fin') {
+          val = this.formatHoras(val);
         }
         r[c.l] = val;
       });
@@ -462,7 +501,16 @@ const app = {
     if (!item) return;
     document.getElementById('detailNombre').innerText = `${item.nombre} ${item.apellido}`;
     document.getElementById('detailArea').innerText = item.area;
-    document.getElementById('detailHoras').innerText = `${item.horas} h`;
+    document.getElementById('detailHoras').innerText = `${this.formatHoras(item.horas)} h`;
+    const rangoEl = document.getElementById('detailRangoHoras');
+    if (rangoEl) {
+      if (item.hora_inicio && item.hora_fin) {
+        rangoEl.innerText = `${this.formatHoras(item.hora_inicio)} a ${this.formatHoras(item.hora_fin)}`;
+        rangoEl.style.display = 'block';
+      } else {
+        rangoEl.style.display = 'none';
+      }
+    }
     document.getElementById('detailFecha').innerText = this.formatDate(item.fecha);
     document.getElementById('detailEstado').innerHTML = this.getStatusBadgeHTML(item.estado);
     document.getElementById('detailMotivo').innerText = item.motivo;
