@@ -8,7 +8,7 @@ const app = {
   // 1. CONFIGURACIÓN Y ESTADO
   // ==========================================
   config: {
-    apiUrl: 'https://script.google.com/macros/s/AKfycbzJaE-ni-02ubxGhnnael9CMB3G8gGxEjX21IV2LbGQ5Qmxjnb20Xga8CGntVq1lGzyiQ/exec'
+    apiUrl: 'https://script.google.com/macros/s/AKfycbyAf-ZPADaYNyUM87KQxY_huzyxSJr7CIKePTHCDGjIngqSYRBy_2glPZ8a2FDSJkTb2w/exec'
   },
 
   state: {
@@ -22,7 +22,8 @@ const app = {
     failedAttempts: 0,
     inactivityTimer: null,
     users: [],
-    auditLogs: []
+    auditLogs: [],
+    areas: []
   },
 
   // Caché de elementos del DOM para rendimiento
@@ -45,6 +46,27 @@ const app = {
     // Fecha por defecto
     if (this.el.fechaInput) {
       this.el.fechaInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    // Verificar si hay una sesión activa guardada
+    this.restoreSession();
+  },
+
+  restoreSession() {
+    const token = sessionStorage.getItem('sessionToken');
+    const role = sessionStorage.getItem('role');
+    const user = sessionStorage.getItem('currentUser');
+
+    if (token && role && user) {
+      this.state.sessionToken = token;
+      this.state.role = role;
+      this.state.currentUser = user;
+
+      if (document.getElementById('nombre')) {
+        document.getElementById('nombre').value = user;
+      }
+
+      this.completeLogin();
     }
   },
 
@@ -74,7 +96,12 @@ const app = {
       statRechazado: document.getElementById('statRechazado'),
       copiaASelect: document.getElementById('copiaA'),
       copiesTableBody: document.getElementById('copiesTableBody'),
-      copiesEmpty: document.getElementById('copiesEmpty')
+      copiesEmpty: document.getElementById('copiesEmpty'),
+      adminPanelAreas: document.getElementById('adminPanelAreas'),
+      areasTableBody: document.getElementById('areasTableBody'),
+      areasEmpty: document.getElementById('areasEmpty'),
+      newAreaForm: document.getElementById('newAreaForm'),
+      editAreaForm: document.getElementById('editAreaForm')
     };
   },
 
@@ -145,6 +172,17 @@ const app = {
         }
       }
     };
+
+    // Formularios de administración de áreas
+    this.el.newAreaForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitNewArea();
+    });
+
+    this.el.editAreaForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitEditArea();
+    });
 
     this.el.horaInicioInput?.addEventListener('change', calcHoras);
     this.el.horaFinInput?.addEventListener('change', calcHoras);
@@ -326,6 +364,11 @@ const app = {
     this.el.roleBadge.innerText = `Hola, ${this.state.currentUser}`;
     this.el.roleBadge.className = `badge bg-light text-primary py-2 px-3 border rounded-pill`;
 
+    // Guardar sesión en sessionStorage para persistir en recargas (F5)
+    sessionStorage.setItem('sessionToken', this.state.sessionToken);
+    sessionStorage.setItem('role', this.state.role);
+    sessionStorage.setItem('currentUser', this.state.currentUser);
+
     this.loadData();
     this.updateUIByRole();
   },
@@ -333,11 +376,18 @@ const app = {
   logout() {
     clearTimeout(this.state.inactivityTimer);
     this.state.role = null;
+    this.state.currentUser = null;
     this.state.sessionToken = null;
     this.state.data = [];
     this.state.users = [];
     this.state.auditLogs = [];
     this.state.failedAttempts = 0;
+
+    // Limpiar sessionStorage
+    sessionStorage.removeItem('sessionToken');
+    sessionStorage.removeItem('role');
+    sessionStorage.removeItem('currentUser');
+
     this.el.loginScreen.classList.remove('d-none');
     this.el.appContent.classList.add('d-none');
     this.el.mainNav.classList.add('d-none');
@@ -355,6 +405,8 @@ const app = {
       if (res.success) {
         this.state.data = res.data;
         this.state.employees = res.employees || [];
+        this.state.areas = res.areas || [];
+        this.populateAreaDropdowns();
         this.populateCopiaSelect();
         this.renderTables();
         this.updateStats();
@@ -449,16 +501,30 @@ const app = {
     const isSupervisor = this.state.role === 'supervisor';
     const isUser = this.state.role === 'user' || (!isAdmin && !isSupervisor);
 
-    isVisible('adminView', isAdmin || isSupervisor);
-    isVisible('userView', isUser);
+    // El admin ve la vista de administración. El supervisor y los empleados ven la vista de usuario.
+    isVisible('adminView', isAdmin);
+    isVisible('userView', isUser || isSupervisor);
 
     const usersTabBtn = document.getElementById('adminTabBtnUsers');
+    const areasTabBtn = document.getElementById('adminTabBtnAreas');
     const logsTabBtn = document.getElementById('adminTabBtnLogs');
     if (usersTabBtn) usersTabBtn.classList.toggle('d-none', !isAdmin);
+    if (areasTabBtn) areasTabBtn.classList.toggle('d-none', !isAdmin);
     if (logsTabBtn) logsTabBtn.classList.toggle('d-none', !isAdmin);
 
-    if (isUser) {
-      this.switchTab('misHoras');
+    // Ocultar la pestaña "Copias de Solicitudes" para el rol de empleado común (user)
+    const copiasTabBtn = document.getElementById('tabBtnCopias');
+    if (copiasTabBtn) {
+      copiasTabBtn.classList.toggle('d-none', this.state.role === 'user');
+    }
+
+    if (isUser || isSupervisor) {
+      // Si es supervisor y tiene oculta la pestaña de misHoras por defecto o quiere ir directo a copias
+      if (isSupervisor) {
+        this.switchTab('copias');
+      } else {
+        this.switchTab('misHoras');
+      }
     } else {
       this.switchAdminTab('hours');
     }
@@ -1022,17 +1088,21 @@ const app = {
     // Toggle active state on buttons
     document.getElementById('adminTabBtnHours').classList.toggle('active', tab === 'hours');
     document.getElementById('adminTabBtnUsers').classList.toggle('active', tab === 'users');
+    document.getElementById('adminTabBtnAreas')?.classList.toggle('active', tab === 'areas');
     document.getElementById('adminTabBtnLogs').classList.toggle('active', tab === 'logs');
 
     // Toggle active panels
     document.getElementById('adminPanelHours').classList.toggle('d-none', tab !== 'hours');
     document.getElementById('adminPanelUsers').classList.toggle('d-none', tab !== 'users');
+    document.getElementById('adminPanelAreas')?.classList.toggle('d-none', tab !== 'areas');
     document.getElementById('adminPanelLogs').classList.toggle('d-none', tab !== 'logs');
 
     if (tab === 'users') {
       this.loadUsers();
     } else if (tab === 'logs') {
       this.loadAuditLogs();
+    } else if (tab === 'areas') {
+      this.renderAreasTable();
     }
   },
 
@@ -1297,6 +1367,135 @@ const app = {
         <td class="text-muted small">${this.escapeHTML(l.detalles)}</td>
       </tr>
     `).join('');
+  },
+
+  populateAreaDropdowns() {
+    const areas = this.state.areas || [];
+
+    // 1. New request area select
+    const areaSelect = document.getElementById('area');
+    if (areaSelect) {
+      const selectedVal = areaSelect.value;
+      areaSelect.innerHTML = '<option value="" selected disabled>Seleccione área...</option>' +
+        areas.map(a => `<option value="${this.escapeHTML(a)}">${this.escapeHTML(a)}</option>`).join('');
+      if (selectedVal && areas.includes(selectedVal)) {
+        areaSelect.value = selectedVal;
+      }
+    }
+
+    // 2. New user area select
+    const newUserAreaSelect = document.getElementById('newUserArea');
+    if (newUserAreaSelect) {
+      newUserAreaSelect.innerHTML = '<option value="" selected disabled>Seleccione...</option>' +
+        areas.map(a => `<option value="${this.escapeHTML(a)}">${this.escapeHTML(a)}</option>`).join('');
+    }
+
+    // 3. Edit user area select
+    const editUserAreaSelect = document.getElementById('editUserArea');
+    if (editUserAreaSelect) {
+      const selectedVal = editUserAreaSelect.value;
+      editUserAreaSelect.innerHTML = '<option value="" selected disabled>Seleccione...</option>' +
+        areas.map(a => `<option value="${this.escapeHTML(a)}">${this.escapeHTML(a)}</option>`).join('');
+      if (selectedVal && areas.includes(selectedVal)) {
+        editUserAreaSelect.value = selectedVal;
+      }
+    }
+  },
+
+  renderAreasTable() {
+    if (!this.el.areasTableBody) return;
+    const search = (document.getElementById('areaSearchInput')?.value || '').toLowerCase();
+    const filtered = (this.state.areas || []).filter(a => a.toLowerCase().includes(search));
+
+    this.el.areasEmpty.classList.toggle('d-none', filtered.length > 0);
+    this.el.areasTableBody.innerHTML = filtered.map(a => `
+      <tr>
+        <td class="fw-bold">${this.escapeHTML(a)}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-light text-primary me-1" onclick="app.openEditAreaModal('${this.escapeHTML(a)}')" title="Editar Área"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-sm btn-light text-danger" onclick="app.deleteArea('${this.escapeHTML(a)}')" title="Eliminar Área"><i class="bi bi-trash"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  },
+
+  async submitNewArea() {
+    const btn = document.getElementById('newAreaSubmitBtn');
+    const originalText = btn.innerHTML;
+    const input = document.getElementById('newAreaName');
+    const areaName = input.value.trim();
+
+    if (!areaName) return;
+    this.setLoading(btn, true, 'Registrando...');
+
+    try {
+      const res = await this.fetchAPI('create_area', { token: this.state.sessionToken, area: areaName });
+      if (res.success) {
+        this.showToast('Área creada exitosamente', 'success');
+        this.state.areas = res.areas || [];
+        this.populateAreaDropdowns();
+        this.renderAreasTable();
+        input.value = '';
+        bootstrap.Modal.getInstance(document.getElementById('newAreaModal')).hide();
+      } else {
+        this.showToast(res.error || 'Error al crear área', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de conexión', 'danger');
+    } finally {
+      this.setLoading(btn, false, originalText);
+    }
+  },
+
+  openEditAreaModal(areaName) {
+    document.getElementById('editAreaOldName').value = areaName;
+    document.getElementById('editAreaNewName').value = areaName;
+    new bootstrap.Modal(document.getElementById('editAreaModal')).show();
+  },
+
+  async submitEditArea() {
+    const btn = document.getElementById('editAreaSubmitBtn');
+    const originalText = btn.innerHTML;
+    const oldName = document.getElementById('editAreaOldName').value;
+    const newName = document.getElementById('editAreaNewName').value.trim();
+
+    if (!newName || oldName === newName) return;
+    this.setLoading(btn, true, 'Guardando...');
+
+    try {
+      const res = await this.fetchAPI('update_area', { token: this.state.sessionToken, area_antigua: oldName, area_nueva: newName });
+      if (res.success) {
+        this.showToast('Área actualizada exitosamente', 'success');
+        this.state.areas = res.areas || [];
+        this.populateAreaDropdowns();
+        this.renderAreasTable();
+        bootstrap.Modal.getInstance(document.getElementById('editAreaModal')).hide();
+      } else {
+        this.showToast(res.error || 'Error al actualizar área', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de conexión', 'danger');
+    } finally {
+      this.setLoading(btn, false, originalText);
+    }
+  },
+
+  async deleteArea(areaName) {
+    if (!confirm(`¿Está seguro de que desea eliminar el área "${areaName}"? Los usuarios asociados a esta área no se eliminarán, pero se recomienda reasignar su área.`)) return;
+
+    try {
+      const res = await this.fetchAPI('delete_area', { token: this.state.sessionToken, area: areaName });
+      if (res.success) {
+        this.showToast('Área eliminada exitosamente', 'success');
+        this.state.areas = res.areas || [];
+        this.populateAreaDropdowns();
+        this.renderAreasTable();
+      } else {
+        this.showToast(res.error || 'Error al eliminar área', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de conexión', 'danger');
+    }
   },
 
   base64urlToBuffer: b => Uint8Array.from(atob(b.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer,
