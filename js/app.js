@@ -8,7 +8,7 @@ const app = {
   // 1. CONFIGURACIÓN Y ESTADO
   // ==========================================
   config: {
-    apiUrl: 'https://script.google.com/macros/s/AKfycbx4hG_1V2MfW8qNYDCeXbmluRelWlejLws4aF0nM_S1h60vKrUP_fDMOb3UA2f6vaI/exec'
+    apiUrl: 'https://script.google.com/macros/s/AKfycbzJaE-ni-02ubxGhnnael9CMB3G8gGxEjX21IV2LbGQ5Qmxjnb20Xga8CGntVq1lGzyiQ/exec'
   },
 
   state: {
@@ -16,7 +16,13 @@ const app = {
     loginMode: 'user',
     role: null,
     currentUser: null,
-    sessionToken: null
+    sessionToken: null,
+    activeAdminTab: 'hours',
+    captchaAnswer: 0,
+    failedAttempts: 0,
+    inactivityTimer: null,
+    users: [],
+    auditLogs: []
   },
 
   // Caché de elementos del DOM para rendimiento
@@ -34,6 +40,7 @@ const app = {
     this.initWaterRipple();
     this.initCustomCursor();
     this.createParticles();
+    this.setupInactivityTimer();
 
     // Fecha por defecto
     if (this.el.fechaInput) {
@@ -64,7 +71,10 @@ const app = {
       statTotal: document.getElementById('statTotal'),
       statPendiente: document.getElementById('statPendiente'),
       statAprobado: document.getElementById('statAprobado'),
-      statRechazado: document.getElementById('statRechazado')
+      statRechazado: document.getElementById('statRechazado'),
+      copiaASelect: document.getElementById('copiaA'),
+      copiesTableBody: document.getElementById('copiesTableBody'),
+      copiesEmpty: document.getElementById('copiesEmpty')
     };
   },
 
@@ -79,8 +89,45 @@ const app = {
       this.submitRecord();
     });
 
+    document.getElementById('bossApprovalForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitBossApproval();
+    });
+
+    // Filtros de horas extra
     this.el.searchInput?.addEventListener('input', () => this.renderAdminTable());
     this.el.statusFilter?.addEventListener('change', () => this.renderAdminTable());
+
+    // Filtros de usuarios y bitácora
+    document.getElementById('userSearchInput')?.addEventListener('input', () => this.renderUsersTable());
+    document.getElementById('userRoleFilter')?.addEventListener('change', () => this.renderUsersTable());
+    document.getElementById('logSearchInput')?.addEventListener('input', () => this.renderLogsTable());
+
+    // Formularios de administración de usuarios
+    document.getElementById('newUserForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitNewUser();
+    });
+
+    document.getElementById('editUserForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitEditUser();
+    });
+
+    document.getElementById('resetUserPasswordForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitResetPassword();
+    });
+
+    // Validación de fortaleza de contraseña
+    document.getElementById('newPassword')?.addEventListener('input', (e) => {
+      this.checkPasswordStrength(e.target.value);
+    });
+
+    document.getElementById('changePasswordForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitInitialPasswordChange();
+    });
 
     const calcHoras = () => {
       if (this.el.horaInicioInput && this.el.horaFinInput && this.el.horasInput) {
@@ -112,6 +159,15 @@ const app = {
     const originalText = btn.innerHTML;
 
     try {
+      if (this.state.failedAttempts >= 1) {
+        const captchaAns = Number(document.getElementById('captchaAnswer').value);
+        if (captchaAns !== this.state.captchaAnswer) {
+          this.showToast('Respuesta de seguridad incorrecta. Intente de nuevo.', 'danger');
+          this.generateCaptcha();
+          return;
+        }
+      }
+
       this.setLoading(btn, true, 'Verificando...');
 
       const name = document.getElementById('loginName').value.trim();
@@ -122,33 +178,144 @@ const app = {
         return;
       }
 
-      if (name.toLowerCase() === 'admin') {
-        const response = await this.fetchAPI('login_admin', { password: pass });
-        if (response.success) {
-          this.state.role = 'admin';
-          this.state.currentUser = 'Administrador';
-          this.state.sessionToken = response.token;
-          this.completeLogin();
+      const res = await this.fetchAPI('login_user_password', { nombre: name, password: pass });
+      if (res.success) {
+        this.state.failedAttempts = 0;
+        document.getElementById('captchaBox').classList.add('d-none');
+        document.getElementById('captchaAnswer').removeAttribute('required');
+
+        this.state.role = res.role;
+        this.state.currentUser = name;
+        this.state.sessionToken = res.token;
+
+        if (document.getElementById('nombre')) {
+          document.getElementById('nombre').value = name;
+        }
+
+        if (res.cambiar_password) {
+          this.showChangePasswordModal();
         } else {
-          this.showToast('Contraseña de administrador incorrecta', 'danger');
+          this.completeLogin();
         }
       } else {
-        const res = await this.fetchAPI('login_user_password', { nombre: name, password: pass });
-        if (res.success) {
-          this.state.role = 'user';
-          this.state.currentUser = name;
-          this.state.sessionToken = res.token;
-          document.getElementById('nombre').value = name;
-          this.completeLogin();
-        } else {
-          this.showToast(res.error || 'Acceso denegado', 'danger');
-        }
+        this.state.failedAttempts++;
+        this.showToast(res.error || 'Acceso denegado', 'danger');
+        this.generateCaptcha();
       }
     } catch (error) {
       this.showToast('Error de conexión', 'danger');
     } finally {
       this.setLoading(btn, false, originalText);
     }
+  },
+
+  generateCaptcha() {
+    if (this.state.failedAttempts >= 1) {
+      const n1 = Math.floor(Math.random() * 9) + 1;
+      const n2 = Math.floor(Math.random() * 9) + 1;
+      this.state.captchaAnswer = n1 + n2;
+
+      document.getElementById('captchaQuestion').innerText = `${n1} + ${n2} =`;
+      document.getElementById('captchaAnswer').value = '';
+      document.getElementById('captchaAnswer').setAttribute('required', 'true');
+      document.getElementById('captchaBox').classList.remove('d-none');
+    }
+  },
+
+  showChangePasswordModal() {
+    const modalEl = document.getElementById('changePasswordModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  },
+
+  checkPasswordStrength(pw) {
+    const bar = document.getElementById('pwStrengthBar');
+    const txt = document.getElementById('pwStrengthText');
+    if (!bar || !txt) return;
+
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[a-z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+    bar.className = 'progress-bar';
+    if (pw.length === 0) {
+      bar.style.width = '0%';
+      txt.innerText = 'Fortaleza: Muy débil';
+    } else if (score <= 2) {
+      bar.style.width = '33%';
+      bar.classList.add('bg-weak');
+      txt.innerText = 'Fortaleza: Débil';
+    } else if (score <= 4) {
+      bar.style.width = '66%';
+      bar.classList.add('bg-fair');
+      txt.innerText = 'Fortaleza: Aceptable';
+    } else {
+      bar.style.width = '100%';
+      bar.classList.add('bg-strong');
+      txt.innerText = 'Fortaleza: Fuerte';
+    }
+  },
+
+  async submitInitialPasswordChange() {
+    const pw = document.getElementById('newPassword').value;
+    const confirmPw = document.getElementById('confirmPassword').value;
+
+    if (pw !== confirmPw) {
+      this.showToast('Las contraseñas no coinciden', 'danger');
+      return;
+    }
+
+    if (pw.length < 8) {
+      this.showToast('La contraseña debe tener al menos 8 caracteres', 'warning');
+      return;
+    }
+
+    // Validar complejidad básica
+    if (!/[A-Z]/.test(pw) || !/[0-9]/.test(pw)) {
+      this.showToast('La contraseña debe incluir al menos una mayúscula y un número', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('changePasswordSubmitBtn');
+    const originalText = btn.innerHTML;
+    this.setLoading(btn, true, 'Guardando...');
+
+    try {
+      const res = await this.fetchAPI('change_initial_password', {
+        token: this.state.sessionToken,
+        new_password: pw
+      });
+      if (res.success) {
+        this.showToast('Contraseña actualizada correctamente', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+        this.completeLogin();
+      } else {
+        this.showToast(res.error || 'Error al cambiar contraseña', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de servidor', 'danger');
+    } finally {
+      this.setLoading(btn, false, originalText);
+    }
+  },
+
+  setupInactivityTimer() {
+    const resetTimer = () => {
+      if (this.state.sessionToken) {
+        clearTimeout(this.state.inactivityTimer);
+        this.state.inactivityTimer = setTimeout(() => {
+          this.showToast('Sesión expirada por inactividad', 'warning');
+          this.logout();
+        }, 30 * 60 * 1000); // 30 minutos
+      }
+    };
+
+    window.onload = resetTimer;
+    document.onmousemove = resetTimer;
+    document.onkeypress = resetTimer;
   },
 
   completeLogin() {
@@ -164,13 +331,18 @@ const app = {
   },
 
   logout() {
+    clearTimeout(this.state.inactivityTimer);
     this.state.role = null;
     this.state.sessionToken = null;
     this.state.data = [];
+    this.state.users = [];
+    this.state.auditLogs = [];
+    this.state.failedAttempts = 0;
     this.el.loginScreen.classList.remove('d-none');
     this.el.appContent.classList.add('d-none');
     this.el.mainNav.classList.add('d-none');
-    this.el.loginForm.reset();
+    this.el.loginForm?.reset();
+    document.getElementById('captchaBox').classList.add('d-none');
   },
 
   // ==========================================
@@ -182,6 +354,8 @@ const app = {
       const res = await this.fetchAPI('load_data', { token: this.state.sessionToken });
       if (res.success) {
         this.state.data = res.data;
+        this.state.employees = res.employees || [];
+        this.populateCopiaSelect();
         this.renderTables();
         this.updateStats();
       }
@@ -194,13 +368,11 @@ const app = {
 
   async submitRecord() {
     const btn = document.getElementById('submitBtn');
-    const file = document.getElementById('creacionFirma').files[0];
     const originalText = btn.innerHTML;
 
     this.setLoading(btn, true, 'Enviando...');
 
     try {
-      let base64 = file ? await this.compressImage(file) : '';
       const payload = {
         nombre: document.getElementById('nombre').value,
         apellido: document.getElementById('apellido').value,
@@ -210,7 +382,8 @@ const app = {
         hora_fin: document.getElementById('horaFin').value,
         fecha: document.getElementById('fecha').value,
         motivo: document.getElementById('motivo').value,
-        firma_img: base64,
+        copia_a: document.getElementById('copiaA').value,
+        firma_img: '',
         token: this.state.sessionToken
       };
 
@@ -271,18 +444,130 @@ const app = {
   // ==========================================
   updateUIByRole() {
     const isVisible = (id, show) => document.getElementById(id).classList.toggle('d-none', !show);
-    isVisible('adminView', this.state.role === 'admin');
-    isVisible('userView', this.state.role !== 'admin');
+
+    const isAdmin = this.state.role === 'admin';
+    const isSupervisor = this.state.role === 'supervisor';
+    const isUser = this.state.role === 'user' || (!isAdmin && !isSupervisor);
+
+    isVisible('adminView', isAdmin || isSupervisor);
+    isVisible('userView', isUser);
+
+    const usersTabBtn = document.getElementById('adminTabBtnUsers');
+    const logsTabBtn = document.getElementById('adminTabBtnLogs');
+    if (usersTabBtn) usersTabBtn.classList.toggle('d-none', !isAdmin);
+    if (logsTabBtn) logsTabBtn.classList.toggle('d-none', !isAdmin);
+
+    if (isUser) {
+      this.switchTab('misHoras');
+    } else {
+      this.switchAdminTab('hours');
+    }
+  },
+
+  switchTab(tab) {
+    const panels = { misHoras: 'tabPanelMisHoras', copias: 'tabPanelCopias' };
+    const btns = { misHoras: 'tabBtnMisHoras', copias: 'tabBtnCopias' };
+    Object.entries(panels).forEach(([key, id]) => {
+      const panel = document.getElementById(id);
+      const btn = document.getElementById(btns[key]);
+      if (panel) panel.classList.toggle('d-none', key !== tab);
+      if (btn) btn.classList.toggle('active', key === tab);
+    });
+  },
+
+  populateCopiaSelect() {
+    if (!this.el.copiaASelect) return;
+    const current = (this.state.currentUser || '').toLowerCase();
+    const emps = (this.state.employees || []).filter(e => e.toLowerCase() !== current);
+
+    this.el.copiaASelect.innerHTML = '<option value="" selected>Sin copia asignada</option>' +
+      emps.map(e => `<option value="${this.escapeHTML(e)}">${this.escapeHTML(e)}</option>`).join('');
+  },
+
+  async confirmCopyRead(id, btn) {
+    const originalText = btn.innerHTML;
+    this.setLoading(btn, true, 'Confirmando...');
+
+    try {
+      const res = await this.fetchAPI('confirm_copy_read', { id, token: this.state.sessionToken });
+      if (res.success) {
+        this.showToast('Lectura confirmada', 'success');
+        this.loadData();
+      } else {
+        this.showToast(res.error || 'Error al confirmar', 'danger');
+        this.setLoading(btn, false, originalText);
+      }
+    } catch (e) {
+      this.showToast('Error de conexión', 'danger');
+      this.setLoading(btn, false, originalText);
+    }
+  },
+
+  openBossApprovalModal(id) {
+    const item = this.state.data.find(x => x.id === id);
+    if (!item) return;
+
+    document.getElementById('bossApproveRecordId').value = item.id;
+    document.getElementById('bossApproveEmpleado').innerText = `${item.nombre} ${item.apellido}`;
+    document.getElementById('bossApproveFecha').innerText = this.formatDate(item.fecha);
+    document.getElementById('bossApproveHoras').innerText = `${this.formatHoras(item.horas)} h`;
+    document.getElementById('bossApproveArea').innerText = item.area;
+
+    const fileInput = document.getElementById('bossSignatureFile');
+    if (fileInput) fileInput.value = '';
+
+    new bootstrap.Modal(document.getElementById('bossApprovalModal')).show();
+  },
+
+  async submitBossApproval() {
+    const btn = document.getElementById('bossApproveSubmitBtn');
+    const fileInput = document.getElementById('bossSignatureFile');
+    const file = fileInput.files[0];
+    const id = document.getElementById('bossApproveRecordId').value;
+    const originalText = btn.innerHTML;
+
+    if (!file) {
+      this.showToast('Por favor, seleccione un archivo de firma', 'warning');
+      return;
+    }
+
+    this.setLoading(btn, true, 'Procesando...');
+
+    try {
+      let base64 = await this.compressImage(file);
+      const res = await this.fetchAPI('confirm_copy_read', {
+        id,
+        token: this.state.sessionToken,
+        firma_jefe_img: base64
+      });
+      if (res.success) {
+        this.showToast('Firma y revisión registradas exitosamente', 'success');
+        const modalEl = document.getElementById('bossApprovalModal');
+        bootstrap.Modal.getInstance(modalEl).hide();
+        this.loadData();
+      } else {
+        this.showToast(res.error || 'Error al registrar la firma', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de conexión o al procesar la imagen', 'danger');
+    } finally {
+      this.setLoading(btn, false, originalText);
+    }
   },
 
   renderTables() {
     this.renderUserTable();
+    this.renderCopiesTable();
     if (this.state.role === 'admin') this.renderAdminTable();
   },
 
   renderUserTable() {
+    const currentUserLower = (this.state.currentUser || '').toLowerCase();
     const data = this.state.data
-      .filter(item => item.nombre.toLowerCase().includes(this.state.currentUser.toLowerCase()))
+      .filter(item => {
+        const nombreLower = (item.nombre || '').toLowerCase();
+        return nombreLower.includes(currentUserLower);
+      })
       .reverse();
 
     this.el.userEmpty.classList.toggle('d-none', data.length > 0);
@@ -291,6 +576,7 @@ const app = {
         <td>
           <div class="fw-semibold">${this.escapeHTML(item.nombre)} ${this.escapeHTML(item.apellido)}</div>
           <div class="small text-muted">${item.id ? item.id.substring(0, 8) : ''}</div>
+          ${this.getCopyIndicatorHTML(item.copia_a, item.copia_estado, item.copia_fecha_revision)}
         </td>
         <td><span class="badge bg-light text-dark border">${this.escapeHTML(item.area)}</span></td>
         <td class="fw-bold">
@@ -301,7 +587,7 @@ const app = {
         <td class="small text-muted text-truncate" style="max-width: 150px; cursor: pointer; text-decoration: underline;" onclick="app.viewDetails('${item.id}')">${this.escapeHTML(item.motivo)}</td>
         <td>${this.getStatusBadgeHTML(item.estado)}</td>
         <td class="text-end">
-          <button class="btn btn-sm btn-light text-danger" onclick="app.deleteRecord('${item.id}')" ${item.estado.toLowerCase() !== 'pendiente' ? 'disabled' : ''}>
+          <button class="btn btn-sm btn-light text-danger" onclick="app.deleteRecord('${item.id}')" ${(item.estado || '').toLowerCase() !== 'pendiente' ? 'disabled' : ''}>
             <i class="bi bi-trash"></i>
           </button>
         </td>
@@ -309,12 +595,66 @@ const app = {
     `).join('');
   },
 
+  renderCopiesTable() {
+    if (!this.el.copiesTableBody) return;
+    const current = (this.state.currentUser || '').toLowerCase();
+    const copies = this.state.data
+      .filter(item => (item.copia_a || '').toLowerCase() === current)
+      .reverse();
+
+    // Update badge on tab button
+    const badge = document.getElementById('copiasPendienteBadge');
+    if (badge) {
+      const pending = copies.filter(i => (i.copia_estado || '').toLowerCase() !== 'revisada').length;
+      badge.innerText = pending;
+      badge.classList.toggle('d-none', pending === 0);
+    }
+
+    this.el.copiesEmpty.classList.toggle('d-none', copies.length > 0);
+
+    this.el.copiesTableBody.innerHTML = copies.map(item => {
+      const isRevisada = (item.copia_estado || '').toLowerCase() === 'revisada';
+      let actionBtn = '';
+      if (!isRevisada) {
+        actionBtn = `
+          <button class="btn-confirm-copy" onclick="app.openBossApprovalModal('${item.id}')">
+            <i class="bi bi-shield-check"></i> Aprobar con Firma
+          </button>
+        `;
+      } else {
+        actionBtn = `
+          <span class="copy-confirmed-badge">
+            <i class="bi bi-check-circle-fill"></i> Vista el ${this.escapeHTML(this.formatDate(item.copia_fecha_revision, true))}
+          </span>
+        `;
+      }
+
+      return `
+        <tr>
+          <td>
+            <div class="fw-semibold">${this.escapeHTML(item.nombre)} ${this.escapeHTML(item.apellido)}</div>
+            <div class="small text-muted">${item.id ? item.id.substring(0, 8) : ''}</div>
+          </td>
+          <td><span class="badge bg-light text-dark border">${this.escapeHTML(item.area)}</span></td>
+          <td class="fw-bold">
+            <div>${this.escapeHTML(this.formatHoras(item.horas))} h</div>
+            ${item.hora_inicio && item.hora_fin ? `<div class="small text-muted fw-normal">${this.escapeHTML(this.formatHoras(item.hora_inicio))} - ${this.escapeHTML(this.formatHoras(item.hora_fin))}</div>` : ''}
+          </td>
+          <td>${this.escapeHTML(this.formatDate(item.fecha))}</td>
+          <td class="small text-muted text-truncate" style="max-width: 150px; cursor: pointer; text-decoration: underline;" onclick="app.viewDetails('${item.id}')">${this.escapeHTML(item.motivo)}</td>
+          <td>${this.getStatusBadgeHTML(item.estado)}</td>
+          <td class="text-end">${actionBtn}</td>
+        </tr>
+      `;
+    }).join('');
+  },
+
   renderAdminTable() {
     const search = this.el.searchInput.value.toLowerCase();
     const filter = this.el.statusFilter.value.toLowerCase();
 
     const filtered = this.state.data.filter(item => {
-      const matchSearch = (item.nombre + ' ' + item.apellido + ' ' + item.area).toLowerCase().includes(search);
+      const matchSearch = ((item.nombre || '') + ' ' + (item.apellido || '') + ' ' + (item.area || '')).toLowerCase().includes(search);
       const matchStatus = filter === '' || (item.estado || '').toLowerCase() === filter;
       return matchSearch && matchStatus;
     }).reverse();
@@ -325,6 +665,7 @@ const app = {
         <td>
           <div class="fw-semibold">${this.escapeHTML(item.nombre)} ${this.escapeHTML(item.apellido)}</div>
           <div class="small text-muted">Sol: ${this.formatDate(item.fecha_creacion, true)}</div>
+          ${this.getCopyIndicatorHTML(item.copia_a, item.copia_estado, item.copia_fecha_revision)}
         </td>
         <td><span class="badge bg-light text-dark border">${this.escapeHTML(item.area)}</span></td>
         <td class="fw-bold">
@@ -335,7 +676,7 @@ const app = {
         <td class="small text-muted text-truncate" style="max-width: 150px; cursor: pointer; text-decoration: underline;" onclick="app.viewDetails('${item.id}')">${this.escapeHTML(item.motivo)}</td>
         <td id="status-cell-${item.id}">${this.getAdminStatusHTML(item.id, item.estado)}</td>
         <td class="text-center">
-          ${item.firma_img ? `<button class="btn btn-sm btn-light text-primary" onclick="app.viewSignature('${item.id}')"><i class="bi bi-eye"></i></button>` : '<span class="small text-muted">No</span>'}
+          ${item.firma_jefe_img ? `<button class="btn btn-sm btn-light text-success" onclick="app.viewSignature('${item.id}', 'jefe')" title="Ver Firma Jefe"><i class="bi bi-eye"></i></button>` : '<span class="small text-muted">No</span>'}
         </td>
         <td class="text-end">
           <button class="btn btn-sm btn-light text-danger" onclick="app.deleteRecord('${item.id}')"><i class="bi bi-trash"></i></button>
@@ -355,6 +696,9 @@ const app = {
   },
 
   getAdminStatusHTML(id, status) {
+    if (this.state.role !== 'admin') {
+      return this.getStatusBadgeHTML(status);
+    }
     return `
       <div class="dropdown">
         <button class="btn btn-sm btn-light border dropdown-toggle w-100 text-start" data-bs-toggle="dropdown" data-bs-boundary="viewport">
@@ -408,7 +752,8 @@ const app = {
 
   getStatusBadgeHTML(status) {
     const s = (status || 'pendiente').toLowerCase();
-    return `<span class="status-badge status-${s}"><span class="status-dot"></span>${s}</span>`;
+    const cssClass = s.replace(/\s+/g, '-');
+    return `<span class="status-badge status-${cssClass}"><span class="status-dot"></span>${s}</span>`;
   },
 
   formatDate(str, includeTime = false) {
@@ -420,7 +765,7 @@ const app = {
   },
 
   async compressImage(file) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
@@ -432,8 +777,10 @@ const app = {
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
           resolve(canvas.toDataURL('image/jpeg', 0.6));
         };
+        img.onerror = () => reject(new Error('No se pudo cargar la imagen'));
         img.src = e.target.result;
       };
+      reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
       reader.readAsDataURL(file);
     });
   },
@@ -488,10 +835,18 @@ const app = {
     XLSX.writeFile(wb, `Reporte_Horas_${new Date().toISOString().split('T')[0]}.xlsx`);
   },
 
-  viewSignature(id) {
+  viewSignature(id, type = 'empleado') {
     const item = this.state.data.find(x => x.id === id);
-    if (item?.firma_img) {
-      document.getElementById('fullSizeImage').src = item.firma_img;
+    const src = type === 'empleado' ? item?.firma_img : item?.firma_jefe_img;
+    if (src) {
+      document.getElementById('fullSizeImage').src = src;
+      new bootstrap.Modal(document.getElementById('imageViewerModal')).show();
+    }
+  },
+
+  viewSignatureDirect(src) {
+    if (src) {
+      document.getElementById('fullSizeImage').src = src;
       new bootstrap.Modal(document.getElementById('imageViewerModal')).show();
     }
   },
@@ -514,7 +869,75 @@ const app = {
     document.getElementById('detailFecha').innerText = this.formatDate(item.fecha);
     document.getElementById('detailEstado').innerHTML = this.getStatusBadgeHTML(item.estado);
     document.getElementById('detailMotivo').innerText = item.motivo;
+
+    const copiaA = document.getElementById('detailCopiaA');
+    const copiaEstado = document.getElementById('detailCopiaEstado');
+    const copiaFecha = document.getElementById('detailCopiaFecha');
+
+    if (item.copia_a) {
+      copiaA.innerText = item.copia_a;
+      const estado = (item.copia_estado || '').toLowerCase();
+      if (estado === 'revisada') {
+        copiaEstado.innerHTML = `<span>✓ Revisada</span>`;
+        copiaFecha.innerText = `${this.formatDate(item.copia_fecha_revision, true)}`;
+        copiaFecha.style.display = 'block';
+      } else {
+        copiaEstado.innerHTML = `<span>⏳ Pendiente de revisión</span>`;
+        copiaFecha.style.display = 'none';
+      }
+    } else {
+      copiaA.innerHTML = `<span class="text-muted">Ninguno</span>`;
+      copiaEstado.innerHTML = `<span>🚫 Sin copia asignada</span>`;
+      copiaFecha.style.display = 'none';
+    }
+
+    const isAdm = this.state.role === 'admin';
+    const firmasSec = document.getElementById('detailFirmasSeccion');
+
+    if (firmasSec) {
+      if (isAdm) {
+        firmasSec.style.display = 'flex';
+
+        const imgEmp = document.getElementById('detailFirmaEmpleado');
+        const noneEmp = document.getElementById('detailFirmaEmpleadoNone');
+        if (item.firma_img) {
+          imgEmp.src = item.firma_img;
+          imgEmp.style.display = 'block';
+          imgEmp.onclick = () => this.viewSignatureDirect(item.firma_img);
+          noneEmp.style.display = 'none';
+        } else {
+          imgEmp.style.display = 'none';
+          noneEmp.style.display = 'block';
+        }
+
+        const imgJefe = document.getElementById('detailFirmaJefe');
+        const noneJefe = document.getElementById('detailFirmaJefeNone');
+        if (item.firma_jefe_img) {
+          imgJefe.src = item.firma_jefe_img;
+          imgJefe.style.display = 'block';
+          imgJefe.onclick = () => this.viewSignatureDirect(item.firma_jefe_img);
+          noneJefe.style.display = 'none';
+        } else {
+          imgJefe.style.display = 'none';
+          noneJefe.style.display = 'block';
+        }
+      } else {
+        firmasSec.style.display = 'none';
+      }
+    }
+
     new bootstrap.Modal(document.getElementById('detailsModal')).show();
+  },
+
+  getCopyIndicatorHTML(copia_a, copia_estado, copia_fecha_revision) {
+    if (!copia_a) {
+      return `<span class="copy-indicator copy-indicator-none">🚫 Sin copia asignada</span>`;
+    }
+    const estado = (copia_estado || '').toLowerCase();
+    if (estado === 'revisada') {
+      return `<span class="copy-indicator copy-indicator-revisada" title="Revisada el ${this.escapeHTML(this.formatDate(copia_fecha_revision, true))}">✓ Revisada · ${this.escapeHTML(copia_a)}</span>`;
+    }
+    return `<span class="copy-indicator copy-indicator-pendiente">⏳ Pendiente · ${this.escapeHTML(copia_a)}</span>`;
   },
 
   // ==========================================
@@ -585,6 +1008,292 @@ const app = {
 
       container.appendChild(p);
     }
+  },
+
+  // ==========================================
+  // 8. ADMINISTRACIÓN DE USUARIOS
+  // ==========================================
+  switchAdminTab(tab) {
+    this.state.activeAdminTab = tab;
+
+    // Toggle active state on buttons
+    document.getElementById('adminTabBtnHours').classList.toggle('active', tab === 'hours');
+    document.getElementById('adminTabBtnUsers').classList.toggle('active', tab === 'users');
+    document.getElementById('adminTabBtnLogs').classList.toggle('active', tab === 'logs');
+
+    // Toggle active panels
+    document.getElementById('adminPanelHours').classList.toggle('d-none', tab !== 'hours');
+    document.getElementById('adminPanelUsers').classList.toggle('d-none', tab !== 'users');
+    document.getElementById('adminPanelLogs').classList.toggle('d-none', tab !== 'logs');
+
+    if (tab === 'users') {
+      this.loadUsers();
+    } else if (tab === 'logs') {
+      this.loadAuditLogs();
+    }
+  },
+
+  async loadUsers() {
+    const loader = document.getElementById('usersLoader');
+    const empty = document.getElementById('usersEmpty');
+    loader.classList.remove('d-none');
+    empty.classList.add('d-none');
+    document.getElementById('usersTableBody').innerHTML = '';
+
+    try {
+      const res = await this.fetchAPI('load_users', { token: this.state.sessionToken });
+      if (res.success) {
+        this.state.users = res.users;
+        this.renderUsersTable();
+      } else {
+        this.showToast(res.error || 'Error al cargar usuarios', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de conexión', 'danger');
+    } finally {
+      loader.classList.add('d-none');
+    }
+  },
+
+  renderUsersTable() {
+    const search = (document.getElementById('userSearchInput').value || '').toLowerCase();
+    const filter = (document.getElementById('userRoleFilter').value || '').toLowerCase();
+    const tbody = document.getElementById('usersTableBody');
+    const empty = document.getElementById('usersEmpty');
+
+    const filtered = this.state.users.filter(u => {
+      const matchSearch = ((u.usuario || '') + ' ' + (u.nombre_completo || '') + ' ' + (u.cargo || '') + ' ' + (u.area || '')).toLowerCase().includes(search);
+      const matchRole = filter === '' || (u.rol || '').toLowerCase() === filter;
+      return matchSearch && matchRole;
+    }).reverse();
+
+    empty.classList.toggle('d-none', filtered.length > 0);
+
+    tbody.innerHTML = filtered.map(u => `
+      <tr>
+        <td>
+          <div class="fw-bold text-dark">${this.escapeHTML(u.usuario)}</div>
+          <div class="small text-muted">${this.escapeHTML(u.nombre_completo)}</div>
+        </td>
+        <td>
+          <div class="small">${this.escapeHTML(u.correo)}</div>
+        </td>
+        <td>
+          <div class="fw-semibold">${this.escapeHTML(u.cargo)}</div>
+          <div class="small text-muted">${this.escapeHTML(u.area)}</div>
+        </td>
+        <td>
+          <span class="badge ${u.rol === 'admin' ? 'bg-primary' : u.rol === 'supervisor' ? 'bg-success' : 'bg-secondary'} user-badge-role">
+            ${this.escapeHTML(u.rol)}
+          </span>
+        </td>
+        <td>
+          <span class="status-badge status-${u.estado === 'activo' ? 'aprobado' : 'rechazado'}">
+            <span class="status-dot"></span>${this.escapeHTML(u.estado)}
+          </span>
+        </td>
+        <td>
+          <div class="small">Creación: ${this.formatDate(u.fecha_creacion)}</div>
+          <div class="small text-muted">Acceso: ${u.ultimo_acceso ? this.formatDate(u.ultimo_acceso, true) : 'Nunca'}</div>
+        </td>
+        <td class="text-end">
+          <div class="dropdown d-inline-block">
+            <button class="btn btn-sm btn-light border dropdown-toggle" data-bs-toggle="dropdown">
+              Acciones
+            </button>
+            <ul class="dropdown-menu shadow">
+              <li><button class="dropdown-item" onclick="app.openEditUserModal('${u.usuario}')"><i class="bi bi-pencil-square"></i> Editar</button></li>
+              <li><button class="dropdown-item text-warning" onclick="app.openResetPasswordModal('${u.usuario}', '${u.nombre_completo}')"><i class="bi bi-key"></i> Restablecer Clave</button></li>
+              <li><button class="dropdown-item text-danger" onclick="app.deleteUser('${u.usuario}')"><i class="bi bi-trash"></i> Eliminar</button></li>
+            </ul>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  },
+
+  async submitNewUser() {
+    const btn = document.getElementById('newUserSubmitBtn');
+    const originalText = btn.innerHTML;
+
+    this.setLoading(btn, true, 'Registrando...');
+
+    const payload = {
+      token: this.state.sessionToken,
+      usuario: document.getElementById('newUsername').value,
+      nombre_completo: document.getElementById('newUserNombre').value,
+      correo: document.getElementById('newUserCorreo').value,
+      cargo: document.getElementById('newUserCargo').value,
+      area: document.getElementById('newUserArea').value,
+      rol: document.getElementById('newUserRol').value,
+      estado: document.getElementById('newUserEstado').value,
+      password: document.getElementById('newUserPassword').value
+    };
+
+    try {
+      const res = await this.fetchAPI('create_user', payload);
+      if (res.success) {
+        this.showToast('Usuario registrado exitosamente', 'success');
+        document.getElementById('newUserForm').reset();
+        bootstrap.Modal.getInstance(document.getElementById('newUserModal')).hide();
+        this.loadUsers();
+      } else {
+        this.showToast(res.error || 'Error al registrar usuario', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de conexión', 'danger');
+    } finally {
+      this.setLoading(btn, false, originalText);
+    }
+  },
+
+  openEditUserModal(username) {
+    const u = this.state.users.find(x => x.usuario === username);
+    if (!u) return;
+
+    document.getElementById('editUserUsername').value = u.usuario;
+    document.getElementById('editUserNombre').value = u.nombre_completo || '';
+    document.getElementById('editUserCorreo').value = u.correo || '';
+    document.getElementById('editUserCargo').value = u.cargo || '';
+    document.getElementById('editUserArea').value = u.area || '';
+    document.getElementById('editUserRol').value = u.rol || 'user';
+    document.getElementById('editUserEstado').value = u.estado || 'activo';
+
+    new bootstrap.Modal(document.getElementById('editUserModal')).show();
+  },
+
+  async submitEditUser() {
+    const btn = document.getElementById('editUserSubmitBtn');
+    const originalText = btn.innerHTML;
+
+    this.setLoading(btn, true, 'Guardando...');
+
+    const payload = {
+      token: this.state.sessionToken,
+      usuario: document.getElementById('editUserUsername').value,
+      nombre_completo: document.getElementById('editUserNombre').value,
+      correo: document.getElementById('editUserCorreo').value,
+      cargo: document.getElementById('editUserCargo').value,
+      area: document.getElementById('editUserArea').value,
+      rol: document.getElementById('editUserRol').value,
+      estado: document.getElementById('editUserEstado').value
+    };
+
+    try {
+      const res = await this.fetchAPI('update_user', payload);
+      if (res.success) {
+        this.showToast('Usuario actualizado correctamente', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+        this.loadUsers();
+      } else {
+        this.showToast(res.error || 'Error al actualizar usuario', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de conexión', 'danger');
+    } finally {
+      this.setLoading(btn, false, originalText);
+    }
+  },
+
+  openResetPasswordModal(username, fullname) {
+    document.getElementById('resetPasswordUsername').value = username;
+    document.getElementById('resetPasswordTargetUser').innerText = `${fullname} (${username})`;
+    document.getElementById('resetNewPassword').value = '';
+
+    new bootstrap.Modal(document.getElementById('resetUserPasswordModal')).show();
+  },
+
+  async submitResetPassword() {
+    const btn = document.getElementById('resetUserPasswordSubmitBtn');
+    const originalText = btn.innerHTML;
+    const pw = document.getElementById('resetNewPassword').value;
+
+    if (pw.length < 8) {
+      this.showToast('La contraseña debe tener al menos 8 caracteres', 'warning');
+      return;
+    }
+
+    this.setLoading(btn, true, 'Restableciendo...');
+
+    const payload = {
+      token: this.state.sessionToken,
+      usuario: document.getElementById('resetPasswordUsername').value,
+      new_password: pw
+    };
+
+    try {
+      const res = await this.fetchAPI('reset_password', payload);
+      if (res.success) {
+        this.showToast('Contraseña restablecida exitosamente', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('resetUserPasswordModal')).hide();
+      } else {
+        this.showToast(res.error || 'Error al restablecer contraseña', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de conexión', 'danger');
+    } finally {
+      this.setLoading(btn, false, originalText);
+    }
+  },
+
+  async deleteUser(username) {
+    if (username.toLowerCase() === 'admin') {
+      this.showToast('No se puede eliminar el usuario administrador principal', 'danger');
+      return;
+    }
+
+    if (!confirm(`¿Está seguro de que desea eliminar permanentemente al usuario ${username}?`)) return;
+
+    try {
+      const res = await this.fetchAPI('delete_user', { token: this.state.sessionToken, usuario: username });
+      if (res.success) {
+        this.showToast('Usuario eliminado correctamente', 'success');
+        this.loadUsers();
+      } else {
+        this.showToast(res.error || 'Error al eliminar usuario', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de servidor', 'danger');
+    }
+  },
+
+  async loadAuditLogs() {
+    const loader = document.getElementById('logsLoader');
+    loader.classList.remove('d-none');
+    document.getElementById('logsTableBody').innerHTML = '';
+
+    try {
+      const res = await this.fetchAPI('load_audit_logs', { token: this.state.sessionToken });
+      if (res.success) {
+        this.state.auditLogs = res.logs;
+        this.renderLogsTable();
+      } else {
+        this.showToast(res.error || 'Error al cargar bitácora', 'danger');
+      }
+    } catch (e) {
+      this.showToast('Error de conexión', 'danger');
+    } finally {
+      loader.classList.add('d-none');
+    }
+  },
+
+  renderLogsTable() {
+    const search = (document.getElementById('logSearchInput').value || '').toLowerCase();
+    const tbody = document.getElementById('logsTableBody');
+
+    const filtered = this.state.auditLogs.filter(l => {
+      return ((l.usuario || '') + ' ' + (l.accion || '') + ' ' + (l.detalles || '')).toLowerCase().includes(search);
+    }).reverse();
+
+    tbody.innerHTML = filtered.map(l => `
+      <tr>
+        <td class="font-monospace small">${this.escapeHTML(l.id ? l.id.substring(0, 8) : '')}</td>
+        <td>${this.escapeHTML(this.formatDate(l.fecha_hora, true))}</td>
+        <td class="fw-bold">${this.escapeHTML(l.usuario)}</td>
+        <td><span class="badge bg-light text-dark border">${this.escapeHTML(l.accion)}</span></td>
+        <td class="text-muted small">${this.escapeHTML(l.detalles)}</td>
+      </tr>
+    `).join('');
   },
 
   base64urlToBuffer: b => Uint8Array.from(atob(b.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).buffer,

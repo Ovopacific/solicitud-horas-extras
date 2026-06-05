@@ -142,6 +142,9 @@ body {
 .status-aprobado { background: #ecfdf5; color: #065f46; border: 1px solid #d1fae5; }
 .status-aprobado .status-dot { background: #10b981; }
 
+.status-aprobado-por-el-jefe { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.status-aprobado-por-el-jefe .status-dot { background: #22c55e; }
+
 .status-rechazado { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
 .status-rechazado .status-dot { background: #ef4444; }
 
@@ -341,6 +344,9 @@ body {
 .status-aprobado { background: #ecfdf5; color: #065f46; border: 1px solid #d1fae5; }
 .status-aprobado .status-dot { background: #10b981; }
 
+.status-aprobado-por-el-jefe { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.status-aprobado-por-el-jefe .status-dot { background: #22c55e; }
+
 .status-rechazado { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
 .status-rechazado .status-dot { background: #ef4444; }
 
@@ -509,3 +515,217 @@ body {
   0% { transform: translateY(0) scale(1); }
   100% { transform: translateY(-60px) scale(1.05); }
 }
+
+/* ===========================================
+   11. COPIA AL JEFE - INDICADORES DE LECTURA
+   =========================================== */
+
+/* Indicador de estado de copia en celdas de tabla */
+.copy-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-top: 4px;
+}
+
+.copy-indicator-pendiente {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.copy-indicator-revisada {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.copy-indicator-none {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* Botón "He revisado esta solicitud" */
+.btn-confirm-copy {
+  font-size: 0.78rem;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--p-600), var(--p-500));
+  border: none;
+  color: white;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-confirm-copy:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(79, 70, 229, 0.45);
+  color: white;
+}
+
+/* Badge de "Revisada" luego de confirmar */
+.copy-confirmed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #059669;
+  white-space: nowrap;
+}
+
+/* Sección de Copias de Solicitudes en userView */
+#copiesTable thead th,
+#copiesTable tbody td {
+  vertical-align: middle;
+}
+
+#copiesTable .table-responsive {
+  padding-bottom: 20px;
+}
+
+/* Animación de aparición suave al confirmar lectura */
+@keyframes fade-confirm {
+  0% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.copy-confirmed-badge {
+  animation: fade-confirm 0.35s ease forwards;
+}
+
+/* Estado de lectura en el modal de detalles */
+#detailCopiaSeccion {
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin-top: 4px;
+}
+
+#detailCopiaEstado {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+#detailCopiaFecha {
+  font-size: 0.78rem;
+  color: var(--slate-400);
+  margin-top: 2px;
+}
+
+/* ===========================================
+   12. PESTAÑAS DE USUARIO (Mis Horas / Copias)
+   =========================================== */
+
+.user-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  padding: 6px;
+  width: fit-content;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.08);
+}
+
+.user-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 11px;
+  border: none;
+  background: transparent;
+  color: var(--slate-600);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.user-tab-btn:hover:not(.active) {
+  background: rgba(79, 70, 229, 0.07);
+  color: var(--p-600);
+}
+
+.user-tab-btn.active {
+  background: linear-gradient(135deg, var(--p-600), var(--p-500));
+  color: white;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+}
+
+.user-tab-btn i {
+  font-size: 1rem;
+}
+
+/* Badge de copias pendientes en la pestaña */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  animation: badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.user-tab-btn.active .tab-badge {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+@keyframes badge-pop {
+  0%   { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+@media (max-width: 576px) {
+  .user-tabs {
+    width: 100%;
+  }
+  .user-tab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+  }
+}
+
+/* 13. ADICIONALES GESTIÓN USUARIOS Y SEGURIDAD */
+.captcha-container {
+  border-radius: 12px;
+  background-color: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+.bg-weak { background-color: #ef4444 !important; }
+.bg-fair { background-color: #f59e0b !important; }
+.bg-strong { background-color: #10b981 !important; }
+
+#logsTable tbody td, #usersTable tbody td {
+  font-size: 0.88rem;
+  padding: 12px 8px;
+}
+.user-badge-role {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.5px;
+}
+
