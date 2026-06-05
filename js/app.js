@@ -739,8 +739,11 @@ const app = {
   },
 
   toggleLoader(show) {
-    if (this.state.role === 'admin') this.el.adminLoader.classList.toggle('d-none', !show);
-    else this.el.userLoader.classList.toggle('d-none', !show);
+    if (this.state.role === 'admin' || this.state.role === 'supervisor') {
+      this.el.adminLoader?.classList.toggle('d-none', !show);
+    } else {
+      this.el.userLoader?.classList.toggle('d-none', !show);
+    }
   },
 
   showToast(msg, type = 'info') {
