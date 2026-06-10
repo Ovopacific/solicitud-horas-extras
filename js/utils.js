@@ -29,10 +29,10 @@ window.appUtils = {
         img.onload = () => {
           const canvas = document.createElement('canvas');
           let w = img.width, h = img.height;
-          if (w > 250) { h *= 250 / w; w = 250; }
+          if (w > 200) { h *= 200 / w; w = 200; }
           canvas.width = w; canvas.height = h;
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', 0.6));
+          resolve(canvas.toDataURL('image/jpeg', 0.5));
         };
         img.onerror = () => reject(new Error('No se pudo cargar la imagen'));
         img.src = e.target.result;
