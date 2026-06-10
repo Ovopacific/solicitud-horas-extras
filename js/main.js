@@ -84,8 +84,14 @@ const app = {
     document.getElementById('userSearchInput')?.addEventListener('input', () => this.renderUsersTable());
     document.getElementById('userRoleFilter')?.addEventListener('change', () => this.renderUsersTable());
 
-    this.el.searchInput?.addEventListener('input', () => this.renderAdminTable());
-    this.el.statusFilter?.addEventListener('change', () => this.renderAdminTable());
+    this.el.searchInput?.addEventListener('input', () => {
+      this.displayLimit = 50;
+      this.renderAdminTable();
+    });
+    this.el.statusFilter?.addEventListener('change', () => {
+      this.displayLimit = 50;
+      this.renderAdminTable();
+    });
     document.getElementById('logSearchInput')?.addEventListener('input', () => this.renderLogsTable());
 
     document.getElementById('newUserForm')?.addEventListener('submit', (e) => {
@@ -161,6 +167,7 @@ const app = {
         this.state.areas = res.areas || [];
         this.populateAreaDropdowns();
         this.populateCopiaSelect();
+        this.displayLimit = 50;
         this.renderTables();
         this.updateStats();
       }

@@ -1,4 +1,11 @@
 window.appAdmin = {
+  displayLimit: 50,
+
+  loadMoreAdminRecords() {
+    this.displayLimit = (this.displayLimit || 50) + 50;
+    this.renderAdminTable();
+  },
+
   renderAdminTable() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const filter = document.getElementById('statusFilter').value.toLowerCase();
@@ -12,8 +19,16 @@ window.appAdmin = {
       return matchSearch && matchStatus;
     }).reverse();
 
+    const displayData = filtered.slice(0, this.displayLimit || 50);
+    const hasMore = filtered.length > displayData.length;
+
+    const loadMoreContainer = document.getElementById('adminLoadMoreContainer');
+    if (loadMoreContainer) {
+      loadMoreContainer.classList.toggle('d-none', !hasMore);
+    }
+
     if (empty) empty.classList.toggle('d-none', filtered.length > 0);
-    tbody.innerHTML = filtered.map(item => `
+    tbody.innerHTML = displayData.map(item => `
       <tr id="row-${item.id}">
         <td>
           <div class="fw-semibold">${window.appUtils.escapeHTML(item.nombre)} ${window.appUtils.escapeHTML(item.apellido)}</div>
