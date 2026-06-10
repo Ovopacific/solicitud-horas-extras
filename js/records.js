@@ -325,7 +325,10 @@ window.appRecords = {
       { k: 'hora_inicio', l: 'Hora Inicio' }, { k: 'hora_fin', l: 'Hora Fin' },
       { k: 'horas', l: 'Horas' },
       { k: 'fecha', l: 'Fecha' }, { k: 'motivo', l: 'Motivo' },
-      { k: 'estado', l: 'Estado' }
+      { k: 'estado', l: 'Estado' },
+      { k: 'copia_a', l: 'Copiado a (Jefe)' },
+      { k: 'copia_estado', l: 'Estado Aprobación Jefe' },
+      { k: 'copia_fecha_revision', l: 'Fecha Aprobación Jefe' }
     ];
     const rows = this.state.data.map(i => {
       const r = {};
@@ -339,10 +342,18 @@ window.appRecords = {
           } else {
             val = this.formatDate(val);
           }
+        } else if (c.k === 'copia_fecha_revision') {
+          val = this.formatDate(val, true);
+        } else if (c.k === 'copia_estado') {
+          if (!i.copia_a) {
+            val = 'No requerido';
+          } else {
+            val = (val || 'pendiente').toLowerCase() === 'revisada' ? 'Aprobado' : 'Pendiente';
+          }
         } else if (c.k === 'horas' || c.k === 'hora_inicio' || c.k === 'hora_fin') {
           val = this.formatHoras(val);
         }
-        r[c.l] = val;
+        r[c.l] = val || '';
       });
       return r;
     });
