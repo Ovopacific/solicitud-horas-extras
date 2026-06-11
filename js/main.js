@@ -15,8 +15,8 @@ const app = {
     this.setupEventListeners();
 
     // Inicialización de UI
-    setTimeout(() => this.init3DLogin(), 100);
-    this.initWaterRipple();
+    // setTimeout(() => this.init3DLogin(), 100);
+    // this.initWaterRipple();
     this.initCustomCursor();
     // this.createParticles();
     this.setupInactivityTimer();
