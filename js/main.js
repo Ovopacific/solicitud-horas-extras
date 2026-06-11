@@ -18,7 +18,7 @@ const app = {
     setTimeout(() => this.init3DLogin(), 100);
     this.initWaterRipple();
     this.initCustomCursor();
-    this.createParticles();
+    // this.createParticles();
     this.setupInactivityTimer();
 
     // Fecha por defecto
