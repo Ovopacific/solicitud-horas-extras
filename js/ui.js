@@ -44,23 +44,69 @@ window.appUi = {
   createParticles() {
     const container = document.getElementById('bg-container');
     if (!container) return;
-    container.innerHTML = '';
+    // Keeping this legacy method as a fallback or unused
+  },
 
-    for (let i = 0; i < 6; i++) {
-      const p = document.createElement('div');
-      p.className = 'glass-sphere';
+  initParticles() {
+    const canvas = document.getElementById('particleCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
 
-      p.style.left = `${Math.random() * 80}vw`;
-      p.style.top = `${Math.random() * 80}vh`;
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
 
-      const size = 200 + Math.random() * 300;
-      p.style.width = `${size}px`;
-      p.style.height = `${size}px`;
+    const particles = [];
+    const count = Math.min(Math.floor((w * h) / 12000), 80);
 
-      p.style.animationDuration = `${15 + Math.random() * 15}s`;
-      p.style.animationDelay = `-${Math.random() * 10}s`;
-
-      container.appendChild(p);
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: 1 + Math.random() * 2, // Pequeñas partículas elegantes (1px a 3px)
+        vx: (Math.random() - 0.5) * 0.3, // Movimiento lateral muy sutil
+        vy: -0.15 - Math.random() * 0.35, // Movimiento ascendente lento y elegante
+        alpha: 0.15 + Math.random() * 0.45,
+        colorHue: Math.random() > 0.5 ? 231 : 160 // Tono indigo o esmeralda suave
+      });
     }
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      }, 100);
+    });
+
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.y += p.vy;
+        p.x += p.vx;
+
+        // Reiniciar cuando salgan de pantalla
+        if (p.y < -10) {
+          p.y = h + 10;
+          p.x = Math.random() * w;
+        }
+        if (p.x < -10) p.x = w + 10;
+        if (p.x > w + 10) p.x = -10;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        
+        // Ajustar color y brillo para que contrasten mejor en fondo claro
+        ctx.fillStyle = `hsla(${p.colorHue}, 80%, 55%, ${p.alpha})`;
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = `hsla(${p.colorHue}, 80%, 55%, 0.3)`;
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0; // Reset para rendimiento
+      requestAnimationFrame(animate);
+    }
+    animate();
   }
 };
