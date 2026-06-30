@@ -73,7 +73,8 @@ window.appRecords = {
     const data = this.state.data
       .filter(item => {
         const nombreLower = (item.nombre || '').toLowerCase();
-        return nombreLower.includes(currentUserLower);
+        const creadorLower = (item.creador || '').toLowerCase();
+        return nombreLower.includes(currentUserLower) || creadorLower === currentUserLower;
       })
       .reverse();
 
