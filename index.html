@@ -478,24 +478,25 @@
                   <option value="" selected disabled>Seleccione área...</option>
                 </select>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <label for="fecha" class="form-label text-muted small fw-bold">Fecha</label>
                 <input type="date" class="form-control" id="fecha" required>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <label for="horaInicio" class="form-label text-muted small fw-bold">Hora Inicio</label>
                 <input type="time" class="form-control" id="horaInicio" required>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <label for="horaFin" class="form-label text-muted small fw-bold">Hora Fin</label>
                 <input type="time" class="form-control" id="horaFin" required>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-6">
                 <label for="horas" class="form-label text-muted small fw-bold">Total Horas</label>
                 <div class="input-group">
                   <input type="text" class="form-control bg-light" id="horas" readonly required placeholder="0:00">
-                  <button class="btn btn-outline-primary px-2" type="button" onclick="app.calculateHours()" id="btnCalcularHoras" title="Calcular horas de inicio y fin">
-                    Aplicar
+                  <button class="btn btn-outline-primary px-3 fw-bold d-flex align-items-center gap-1" type="button" onclick="app.calculateHours()" id="btnCalcularHoras">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Calcular y Aplicar</span>
                   </button>
                 </div>
               </div>
