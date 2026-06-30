@@ -53,6 +53,9 @@ window.appUtils = {
   },
 
   toggleLoader(show) {
+    const fullScreenLoader = document.getElementById('fullScreenLoader');
+    fullScreenLoader?.classList.toggle('d-none', !show);
+
     const adminLoader = document.getElementById('adminLoader');
     const userLoader = document.getElementById('userLoader');
     if (this.state.role === 'admin' || this.state.role === 'supervisor') {
