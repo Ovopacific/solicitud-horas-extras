@@ -430,8 +430,13 @@
         <form id="loginForm">
           <input type="text" class="form-control form-control-lg mb-3 login-input" id="loginName" placeholder="Usuario"
             autocomplete="username">
-          <input type="password" class="form-control form-control-lg mb-3 login-input" id="loginPass"
-            placeholder="Contraseña" autocomplete="current-password">
+          <div class="input-group mb-3">
+            <input type="password" class="form-control form-control-lg login-input" id="loginPass"
+              placeholder="Contraseña" autocomplete="current-password">
+            <button class="btn btn-outline-secondary d-flex align-items-center" type="button" onclick="app.togglePasswordVisibility('loginPass', this)" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px; background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.1); border-left: none;">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
 
           <!-- Bot Protection: Simple Math Captcha -->
           <div class="captcha-container p-3 mb-3 bg-light rounded text-start border d-none" id="captchaBox">
@@ -663,7 +668,12 @@
           <form id="changePasswordForm">
             <div class="mb-3">
               <label for="newPassword" class="form-label text-muted small fw-bold">Nueva Contraseña</label>
-              <input type="password" class="form-control" id="newPassword" required>
+              <div class="input-group">
+                <input type="password" class="form-control" id="newPassword" required>
+                <button class="btn btn-outline-secondary d-flex align-items-center" type="button" onclick="app.togglePasswordVisibility('newPassword', this)">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
               <!-- Strength Meter -->
               <div class="progress mt-2" style="height: 6px;">
                 <div id="pwStrengthBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0"
@@ -672,9 +682,13 @@
               <small id="pwStrengthText" class="text-muted d-block mt-1">Fortaleza: Muy débil</small>
             </div>
             <div class="mb-3">
-              <label for="confirmPassword" class="form-label text-muted small fw-bold">Confirmar Nueva
-                Contraseña</label>
-              <input type="password" class="form-control" id="confirmPassword" required>
+              <label for="confirmPassword" class="form-label text-muted small fw-bold">Confirmar Nueva Contraseña</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="confirmPassword" required>
+                <button class="btn btn-outline-secondary d-flex align-items-center" type="button" onclick="app.togglePasswordVisibility('confirmPassword', this)">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
             </div>
             <div class="d-grid mt-4">
               <button type="submit" class="btn btn-primary py-2 fw-bold" id="changePasswordSubmitBtn">Cambiar y Guardar
@@ -738,8 +752,13 @@
               </div>
               <div class="col-12">
                 <label for="newUserPassword" class="form-label text-muted small fw-bold">Contraseña Temporal</label>
-                <input type="password" class="form-control" id="newUserPassword" required minlength="8"
-                  placeholder="Mínimo 8 caracteres">
+                <div class="input-group">
+                  <input type="password" class="form-control" id="newUserPassword" required minlength="8"
+                    placeholder="Mínimo 8 caracteres">
+                  <button class="btn btn-outline-secondary d-flex align-items-center" type="button" onclick="app.togglePasswordVisibility('newUserPassword', this)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="d-grid mt-4">
@@ -823,10 +842,14 @@
           <form id="resetUserPasswordForm">
             <input type="hidden" id="resetPasswordUsername">
             <div class="mb-3">
-              <label for="resetNewPassword" class="form-label text-muted small fw-bold">Nueva Contraseña
-                Temporal</label>
-              <input type="password" class="form-control" id="resetNewPassword" required minlength="8"
-                placeholder="Mínimo 8 caracteres">
+              <label for="resetNewPassword" class="form-label text-muted small fw-bold">Nueva Contraseña Temporal</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="resetNewPassword" required minlength="8"
+                  placeholder="Mínimo 8 caracteres">
+                <button class="btn btn-outline-secondary d-flex align-items-center" type="button" onclick="app.togglePasswordVisibility('resetNewPassword', this)">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
             </div>
             <div class="d-grid mt-4">
               <button type="submit" class="btn btn-danger py-2 fw-bold" id="resetUserPasswordSubmitBtn">Restablecer
