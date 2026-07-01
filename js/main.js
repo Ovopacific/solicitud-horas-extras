@@ -270,26 +270,6 @@ const app = {
     } else if (tab === 'areas') {
       this.renderAreasTable();
     }
-  },
-
-  calculateHours() {
-    if (this.el.horaInicioInput && this.el.horaFinInput && this.el.horasInput) {
-      if (this.el.horaInicioInput.value && this.el.horaFinInput.value) {
-        const [h1, m1] = this.el.horaInicioInput.value.split(':').map(Number);
-        const [h2, m2] = this.el.horaFinInput.value.split(':').map(Number);
-        let diff = (h2 + m2 / 60) - (h1 + m1 / 60);
-        if (diff < 0) diff += 24;
-
-        const totalMinutos = Math.round(diff * 60);
-        const h = Math.floor(totalMinutos / 60);
-        const m = totalMinutos % 60;
-
-        this.el.horasInput.value = `${h}:${m.toString().padStart(2, '0')}`;
-        this.showToast('Horas calculadas y aplicadas', 'success');
-      } else {
-        this.showToast('Por favor, selecciona hora de inicio y fin primero', 'warning');
-      }
-    }
   }
 };
 

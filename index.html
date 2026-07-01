@@ -490,15 +490,9 @@
                 <label for="horaFin" class="form-label text-muted small fw-bold">Hora Fin</label>
                 <input type="time" class="form-control" id="horaFin" required>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <label for="horas" class="form-label text-muted small fw-bold">Total Horas</label>
-                <div class="input-group">
-                  <input type="text" class="form-control bg-light" id="horas" readonly required placeholder="0:00">
-                  <button class="btn btn-outline-primary px-3 fw-bold d-flex align-items-center gap-1" type="button" onclick="app.calculateHours()" id="btnCalcularHoras">
-                    <i class="bi bi-clock-history"></i>
-                    <span>Calcular y Aplicar</span>
-                  </button>
-                </div>
+                <input type="text" class="form-control bg-light" id="horas" readonly required placeholder="0:00">
               </div>
               <div class="col-12">
                 <label for="motivo" class="form-label text-muted small fw-bold">Motivo</label>
